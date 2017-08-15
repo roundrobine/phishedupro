@@ -5,6 +5,8 @@ const cheerio = require('cheerio');
 const async = require('async');
 const url = require('url');
 const parseDomain = require("parse-domain");
+var Nightmare = require('nightmare');
+
 
 //count('Yes. I want. to. place a. lot of. dots.','\\.'); //=> 6
 function count(url, character) {
@@ -18,7 +20,61 @@ export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
     scarp_page: function(callback) {
-      request(url, function(err, resp, body){
+      var nightmare = Nightmare({ show: false });
+      console.log('it enters');
+      nightmare
+        .goto(url)
+        .wait(2000)
+        .evaluate(function () {
+          var hrefArray = [];
+          var imgArray = [];
+          var scriptArray = [];
+          var linkArray = [];
+
+          var linkArrayTemp = document.querySelectorAll("link");
+          for (var i=0;i<linkArrayTemp.length;i++) {
+            if (linkArrayTemp[i].href)
+              linkArray.push(linkArrayTemp[i].href);
+          }
+
+          var hrefArrayTemp = document.querySelectorAll("a");
+          for (var i=0;i<hrefArrayTemp.length;i++) {
+            if (hrefArrayTemp[i].href)
+              hrefArray.push(hrefArrayTemp[i].href);
+          }
+
+          // $('img').each(function(i, img){
+          //  // console.log("image " + i + " :", $(img).attr('src'));
+          //   imgArray.push($(img).attr('src'));
+          // });
+          //
+          // $('script').each(function(i, script){
+          //  // console.log("script " + i + " :", $(script).attr('src'));
+          //   scriptArray.push($(script).attr('src'));
+          // });
+          //
+          // $('link').each(function(i, link){
+          //   //console.log("link " + i + " :", $(link).attr('href'));
+          //   linkArray.push($(link).attr('href'));
+          // });
+
+          return {
+            "hrefArray": hrefArray,
+            // "imgArray": imgArray,
+            // "scriptArray": scriptArray
+             "linkArray": linkArray
+          };
+        })
+        .end()
+        .then(function (result) {
+          console.log(result);
+          callback(null, "success");
+        })
+        .catch(function (error) {
+          console.error('Search failed:', error);
+          callback(error, "success");
+        });
+/*      request(url, function(err, resp, body){
         var $ = cheerio.load(body);
         var anchors  = $('a'); //jquery get all hyperlinks
         var imgs = $('img');
@@ -84,7 +140,7 @@ export function scanURLAndExtractFeatures(url, cb){
         });
 
         callback(null, linksArray);
-      });
+      });*/
     },
     /*parse_ugrl: function(callback) {
       console.log('in make_folder');
