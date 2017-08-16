@@ -7,6 +7,14 @@ const url = require('url');
 const parseDomain = require("parse-domain");
 var Nightmare = require('nightmare');
 
+var AUDIO = "audio";
+var VIDEO = "video";
+var IMG = "img";
+var ANCHOR = "a";
+var SCRIPT = "script";
+var LINK = "link";
+var EMBED = "embed";
+var SOURCE = "source";
 
 //count('Yes. I want. to. place a. lot of. dots.','\\.'); //=> 6
 function count(url, character) {
@@ -24,36 +32,68 @@ export function scanURLAndExtractFeatures(url, cb){
       console.log('it enters');
       nightmare
         .goto(url)
-        .wait(2000)
+        .wait(5000)
         .evaluate(function () {
-          var hrefArray = [];
-          var imgArray = [];
-          var scriptArray = [];
-          var linkArray = [];
+          let hrefArray = [];
+          let imgArray = [];
+          let scriptArray = [];
+          let linkArray = [];
+          let videoArray = [];
+          let audioArray = [];
+          let sourceArray = [];
+          let embedArray = [];
 
-          var linkArrayTemp = document.querySelectorAll("link");
-          for (var i=0;i<linkArrayTemp.length;i++) {
+          let linkArrayTemp = document.querySelectorAll("link");
+          for (let i=0;i<linkArrayTemp.length;i++) {
             if (linkArrayTemp[i].href)
               linkArray.push(linkArrayTemp[i].href);
           }
 
-          var hrefArrayTemp = document.querySelectorAll("a");
-          for (var i=0;i<hrefArrayTemp.length;i++) {
+          let hrefArrayTemp = document.querySelectorAll("a");
+          for (let i=0;i<hrefArrayTemp.length;i++) {
             if (hrefArrayTemp[i].href)
               hrefArray.push(hrefArrayTemp[i].href);
           }
 
-          var scriptArrayTemp = document.querySelectorAll("script");
-          for (var i=0;i<scriptArrayTemp.length;i++) {
+          let imgArrayTemp = document.querySelectorAll("img");
+          for (let i=0;i<imgArrayTemp.length;i++) {
+            if (imgArrayTemp[i].src)
+              imgArray.push(imgArrayTemp[i].src);
+          }
+
+          let scriptArrayTemp = document.querySelectorAll("script");
+          for (let i=0;i<scriptArrayTemp.length;i++) {
             if (scriptArrayTemp[i].src)
               scriptArray.push(scriptArrayTemp[i].src);
           }
 
-          var imgArrayTemp = document.querySelectorAll("img");
-          for (var i=0;i<imgArrayTemp.length;i++) {
-            if (imgArrayTemp[i].src)
-              imgArray.push(imgArrayTemp[i].src);
+          let embedArrayTemp = document.querySelectorAll("embed");
+          for (let i=0;i<embedArrayTemp.length;i++) {
+            if (embedArrayTemp[i].src)
+              embedArray.push(embedArrayTemp[i].src);
           }
+
+          let videoArrayTemp = document.querySelectorAll("video");
+          for (let i=0;i<videoArrayTemp.length;i++) {
+            if (videoArrayTemp[i].src)
+              videoArray.push(videoArrayTemp[i].src);
+          }
+
+          let audioArrayTemp = document.querySelectorAll("audio");
+          for (let i=0;i<audioArrayTemp.length;i++) {
+            if (audioArrayTemp[i].src)
+              audioArray.push(audioArrayTemp[i].src);
+          }
+
+          let sourceArrayTemp = document.querySelectorAll("source");
+          for (let i=0;i<sourceArrayTemp.length;i++) {
+            if (sourceArrayTemp[i].src)
+              sourceArray.push(sourceArrayTemp[i].src);
+          }
+
+
+
+
 
           // $('img').each(function(i, img){
           //  // console.log("image " + i + " :", $(img).attr('src'));
@@ -74,7 +114,11 @@ export function scanURLAndExtractFeatures(url, cb){
             "hrefArray": hrefArray,
             "imgArray": imgArray,
             "scriptArray": scriptArray,
-            "linkArray": linkArray
+            "linkArray": linkArray,
+            "videoArray": videoArray,
+            "audioArray": audioArray,
+            "sourceArray": sourceArray,
+            "embedArray": embedArray
           };
         })
         .end()
