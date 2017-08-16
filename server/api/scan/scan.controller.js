@@ -113,7 +113,6 @@ export function create(req, res) {
         return res.status(500).send(err);
 
       var myUrl = url.parse(req.body.myUrl);
-      console.log(myUrl);
       myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
       if(!myUrl.isUrlIPAddress)
         myUrl.tokenizeHost = parseDomain(req.body.myUrl);

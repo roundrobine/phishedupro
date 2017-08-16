@@ -43,6 +43,18 @@ export function scanURLAndExtractFeatures(url, cb){
               hrefArray.push(hrefArrayTemp[i].href);
           }
 
+          var scriptArrayTemp = document.querySelectorAll("script");
+          for (var i=0;i<scriptArrayTemp.length;i++) {
+            if (scriptArrayTemp[i].src)
+              scriptArray.push(scriptArrayTemp[i].src);
+          }
+
+          var imgArrayTemp = document.querySelectorAll("img");
+          for (var i=0;i<imgArrayTemp.length;i++) {
+            if (imgArrayTemp[i].src)
+              imgArray.push(imgArrayTemp[i].src);
+          }
+
           // $('img').each(function(i, img){
           //  // console.log("image " + i + " :", $(img).attr('src'));
           //   imgArray.push($(img).attr('src'));
@@ -60,9 +72,9 @@ export function scanURLAndExtractFeatures(url, cb){
 
           return {
             "hrefArray": hrefArray,
-            // "imgArray": imgArray,
-            // "scriptArray": scriptArray
-             "linkArray": linkArray
+            "imgArray": imgArray,
+            "scriptArray": scriptArray,
+            "linkArray": linkArray
           };
         })
         .end()
@@ -72,7 +84,7 @@ export function scanURLAndExtractFeatures(url, cb){
         })
         .catch(function (error) {
           console.error('Search failed:', error);
-          callback(error, "success");
+          callback(error, null);
         });
 /*      request(url, function(err, resp, body){
         var $ = cheerio.load(body);
