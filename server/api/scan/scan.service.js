@@ -70,30 +70,6 @@ export function scanURLAndExtractFeatures(url, cb){
               scriptArray.push(scriptArrayTemp[i].src);
           }
 
-        /*  let embedArrayTemp = document.querySelectorAll("embed");
-          for (let i=0;i<embedArrayTemp.length;i++) {
-            if (embedArrayTemp[i].src)
-              embedArray.push(embedArrayTemp[i].src);
-          }
-
-          let videoArrayTemp = document.querySelectorAll("video");
-          for (let i=0;i<videoArrayTemp.length;i++) {
-            if (videoArrayTemp[i].src)
-              videoArray.push(videoArrayTemp[i].src);
-          }
-
-          let audioArrayTemp = document.querySelectorAll("audio");
-          for (let i=0;i<audioArrayTemp.length;i++) {
-            if (audioArrayTemp[i].src)
-              audioArray.push(audioArrayTemp[i].src);
-          }
-
-          let sourceArrayTemp = document.querySelectorAll("source");
-          for (let i=0;i<sourceArrayTemp.length;i++) {
-            if (sourceArrayTemp[i].src)
-              sourceArray.push(sourceArrayTemp[i].src);
-          }*/
-
           let formArrayTemp = document.querySelectorAll("form");
           let formObject = {hasForm:false};
           if(formArrayTemp && formArrayTemp.length > 0) {
@@ -126,10 +102,6 @@ export function scanURLAndExtractFeatures(url, cb){
             "reqURLArray": reqURLArray,
             "scriptArray": scriptArray,
             "linkArray": linkArray,
-            "videoArray": videoArray,
-            "audioArray": audioArray,
-            "sourceArray": sourceArray,
-            "embedArray": embedArray,
             "formObject": formObject,
             "iFrameArray": iFrameArray,
             "inputTextArray": inputTextArray
