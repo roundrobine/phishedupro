@@ -28,20 +28,23 @@ export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
     scarp_page: function(callback) {
-      var nightmare = Nightmare({ show: false });
+      var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
         .goto(url)
-        .wait(5000)
+        .wait(2000)
         .evaluate(function () {
           let hrefArray = [];
-          let imgArray = [];
+          let reqURLArray = [];
           let scriptArray = [];
           let linkArray = [];
           let videoArray = [];
           let audioArray = [];
           let sourceArray = [];
           let embedArray = [];
+          let formArray = [];
+          let iFrameArray = [];
+          let inputTextArray = [];
 
           let linkArrayTemp = document.querySelectorAll("link");
           for (let i=0;i<linkArrayTemp.length;i++) {
@@ -55,10 +58,10 @@ export function scanURLAndExtractFeatures(url, cb){
               hrefArray.push(hrefArrayTemp[i].href);
           }
 
-          let imgArrayTemp = document.querySelectorAll("img");
-          for (let i=0;i<imgArrayTemp.length;i++) {
-            if (imgArrayTemp[i].src)
-              imgArray.push(imgArrayTemp[i].src);
+          let reqURLArrayTemp = document.querySelectorAll("img, embed, video, audio, source");
+          for (let i=0;i<reqURLArrayTemp.length;i++) {
+            if (reqURLArrayTemp[i].src)
+              reqURLArray.push(reqURLArrayTemp[i].src);
           }
 
           let scriptArrayTemp = document.querySelectorAll("script");
@@ -67,7 +70,7 @@ export function scanURLAndExtractFeatures(url, cb){
               scriptArray.push(scriptArrayTemp[i].src);
           }
 
-          let embedArrayTemp = document.querySelectorAll("embed");
+        /*  let embedArrayTemp = document.querySelectorAll("embed");
           for (let i=0;i<embedArrayTemp.length;i++) {
             if (embedArrayTemp[i].src)
               embedArray.push(embedArrayTemp[i].src);
@@ -89,36 +92,47 @@ export function scanURLAndExtractFeatures(url, cb){
           for (let i=0;i<sourceArrayTemp.length;i++) {
             if (sourceArrayTemp[i].src)
               sourceArray.push(sourceArrayTemp[i].src);
+          }*/
+
+          let formArrayTemp = document.querySelectorAll("form");
+          let formObject = {hasForm:false};
+          if(formArrayTemp && formArrayTemp.length > 0) {
+            formObject.hasForm = true;
+
+            for (let i = 0; i < formArrayTemp.length; i++) {
+
+              if (formArrayTemp[i].action)
+                formArray.push(formArrayTemp[i].action);
+            }
+            formObject.actionArray = formArray;
+          }
+
+          let iFrameArrayTemp = document.querySelectorAll("iframe");
+          for (let i=0;i<iFrameArrayTemp.length;i++) {
+            if (iFrameArrayTemp[i].src)
+              iFrameArray.push(iFrameArrayTemp[i].src);
           }
 
 
+          let inputTextArrayTemp = document.querySelectorAll("input[type='password'], input[type='text'], input[type='email']");
+          for (let i=0;i<inputTextArrayTemp.length;i++) {
+            if (inputTextArrayTemp[i])
+              inputTextArray.push(inputTextArrayTemp[i].type);
+          }
 
-
-
-          // $('img').each(function(i, img){
-          //  // console.log("image " + i + " :", $(img).attr('src'));
-          //   imgArray.push($(img).attr('src'));
-          // });
-          //
-          // $('script').each(function(i, script){
-          //  // console.log("script " + i + " :", $(script).attr('src'));
-          //   scriptArray.push($(script).attr('src'));
-          // });
-          //
-          // $('link').each(function(i, link){
-          //   //console.log("link " + i + " :", $(link).attr('href'));
-          //   linkArray.push($(link).attr('href'));
-          // });
 
           return {
             "hrefArray": hrefArray,
-            "imgArray": imgArray,
+            "reqURLArray": reqURLArray,
             "scriptArray": scriptArray,
             "linkArray": linkArray,
             "videoArray": videoArray,
             "audioArray": audioArray,
             "sourceArray": sourceArray,
-            "embedArray": embedArray
+            "embedArray": embedArray,
+            "formObject": formObject,
+            "iFrameArray": iFrameArray,
+            "inputTextArray": inputTextArray
           };
         })
         .end()
