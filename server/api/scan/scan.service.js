@@ -93,6 +93,8 @@ export function scanURLAndExtractFeatures(url, cb){
               inputTextArray.push(inputTextArrayTemp[i].type);
           }
 
+          let urlAddressBar = window.location.href;
+
 
           return {
             "hrefArray": hrefArray,
@@ -101,7 +103,8 @@ export function scanURLAndExtractFeatures(url, cb){
             "linkArray": linkArray,
             "formObject": formObject,
             "iFrameArray": iFrameArray,
-            "inputTextArray": inputTextArray
+            "inputTextArray": inputTextArray,
+            "urlAddressBar": urlAddressBar
           };
         })
         .end()
