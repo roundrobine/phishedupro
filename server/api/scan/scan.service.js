@@ -5,6 +5,7 @@ const cheerio = require('cheerio');
 const async = require('async');
 const url = require('url');
 const parseDomain = require("parse-domain");
+const dns = require('dns');
 var Nightmare = require('nightmare');
 
 var AUDIO = "audio";
@@ -38,10 +39,6 @@ export function scanURLAndExtractFeatures(url, cb){
           let reqURLArray = [];
           let scriptArray = [];
           let linkArray = [];
-          let videoArray = [];
-          let audioArray = [];
-          let sourceArray = [];
-          let embedArray = [];
           let formArray = [];
           let iFrameArray = [];
           let inputTextArray = [];
@@ -184,13 +181,14 @@ export function scanURLAndExtractFeatures(url, cb){
         callback(null, linksArray);
       });*/
     },
-    /*parse_ugrl: function(callback) {
-      console.log('in make_folder');
-      // async code to create a directory to store a file in
-      // this is run at the same time as getting the data
-      callback(null, 'folder');
+    dns_lookup: function(callback) {
+      dns.lookup("iwantmyname.com", function (err, address, family) {
+        console.log('address: %j family: IPv%s', address, family);
+        callback(null, address);
+      });
+
     },
-    write_file: ['get_data', 'make_folder', function(results, callback) {
+   /* write_file: ['get_data', 'make_folder', function(results, callback) {
       console.log('in write_file', JSON.stringify(results));
       // once there is some data and the directory exists,
       // write the data to a file in the directory

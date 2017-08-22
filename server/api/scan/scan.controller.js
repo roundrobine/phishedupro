@@ -16,7 +16,7 @@ var url = require('url');
 var parseDomain = require("parse-domain");
 var ipaddr = require('ipaddr.js');
 const DOT_CHARACTER = '\\.';
-const WWW = "www."
+const WWW = "www"
 
 
 //count('Yes. I want. to. place a. lot of. dots.','\\.'); //=> 6
@@ -25,8 +25,8 @@ function count(url, character) {
 }
 
 function removeWWWSubdomainFromURL(url){
-  if(url && url.length > 3 && url.substring(0,4).toLowerCase() === WWW)
-    return url.substring(4);
+  if(url && url.length > 2 && url.substring(0,3).toLowerCase() === WWW)
+    return url.substring(3);
   return url;
 }
 
@@ -108,25 +108,24 @@ export function show(req, res) {
 
 // Creates a new Scan in the DB
 export function create(req, res) {
+  var myUrl = url.parse(req.body.myUrl);
+  myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
+  if(!myUrl.isUrlIPAddress)
+    myUrl.tokenizeHost = parseDomain(req.body.myUrl);
+  myUrl.urlLenght = req.body.myUrl.length;
+  myUrl.atSimbol = req.body.myUrl.indexOf("@") > -1 ? true : false;
+  myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
+  myUrl.dotsInSubdomainCout = 0;
+  myUrl.hasSubdomain = false;
+  if(myUrl.tokenizeHost) {
+    let filteredSubdomain = removeWWWSubdomainFromURL(myUrl.tokenizeHost.subdomain);
+    myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
+    if(filteredSubdomain)
+      myUrl.hasSubdomain = true;
+  }
     ScanService.scanURLAndExtractFeatures(req.body.myUrl, function(err, result) {
       if(err)
         return res.status(500).send(err);
-
-      var myUrl = url.parse(req.body.myUrl);
-      myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
-      if(!myUrl.isUrlIPAddress)
-        myUrl.tokenizeHost = parseDomain(req.body.myUrl);
-      myUrl.urlLenght = req.body.myUrl.length;
-      myUrl.atSimbol = req.body.myUrl.indexOf("@") > -1 ? true : false;
-      myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
-      myUrl.dotsInSubdomainCout = null;
-      myUrl.hasSubdomain = false;
-      if(myUrl.tokenizeHost) {
-        var filteredSubdomain = removeWWWSubdomainFromURL(myUrl.tokenizeHost.subdomain);
-        myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
-        if(myUrl.tokenizeHost.subdomain)
-          myUrl.hasSubdomain = true;
-      }
       res.status(200).json(myUrl);
     });
 
