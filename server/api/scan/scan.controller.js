@@ -123,7 +123,7 @@ export function create(req, res) {
     if(filteredSubdomain)
       myUrl.hasSubdomain = true;
   }
-    ScanService.scanURLAndExtractFeatures(req.body.myUrl, function(err, result) {
+    ScanService.scanURLAndExtractFeatures(myUrl, function(err, result) {
       if(err)
         return res.status(500).send(err);
       res.status(200).json(myUrl);

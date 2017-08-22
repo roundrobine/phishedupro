@@ -32,7 +32,7 @@ export function scanURLAndExtractFeatures(url, cb){
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
-        .goto(url)
+        .goto(url.href)
         .wait(2000)
         .evaluate(function () {
           let hrefArray = [];
@@ -182,7 +182,7 @@ export function scanURLAndExtractFeatures(url, cb){
       });*/
     },
     dns_lookup: function(callback) {
-      dns.lookup("iwantmyname.com", function (err, address, family) {
+      dns.lookup(url.hostname, function (err, address, family) {
         console.log('address: %j family: IPv%s', address, family);
         callback(null, address);
       });
