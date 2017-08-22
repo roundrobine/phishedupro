@@ -110,7 +110,7 @@ export function show(req, res) {
 export function create(req, res) {
   var myUrl = url.parse(req.body.myUrl);
   myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
-  if(!myUrl.isUrlIPAddress)
+  if(!myUrl.isUrlIPAddress && myUrl.host)
     myUrl.tokenizeHost = parseDomain(req.body.myUrl);
   myUrl.urlLenght = req.body.myUrl.length;
   myUrl.atSimbol = req.body.myUrl.indexOf("@") > -1 ? true : false;
