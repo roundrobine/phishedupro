@@ -108,7 +108,7 @@ export function show(req, res) {
 
 // Creates a new Scan in the DB
 export function create(req, res) {
-  var myUrl = url.parse(req.body.myUrl);
+ /* var myUrl = url.parse(req.body.myUrl);
   myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
   if(!myUrl.isUrlIPAddress && myUrl.host)
     myUrl.tokenizeHost = parseDomain(req.body.myUrl);
@@ -122,11 +122,11 @@ export function create(req, res) {
     myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
     if(filteredSubdomain)
       myUrl.hasSubdomain = true;
-  }
-    ScanService.scanURLAndExtractFeatures(myUrl, function(err, result) {
+  }*/
+    ScanService.scanURLAndExtractFeatures(req.body.myUrl, function(err, result) {
       if(err)
         return res.status(500).send(err);
-      res.status(200).json(myUrl);
+      res.status(200).json(result);
     });
 
 
