@@ -3,9 +3,13 @@
 const request = require('request');
 const cheerio = require('cheerio');
 const async = require('async');
-const url = require('url');
 const parseDomain = require("parse-domain");
 const dns = require('dns');
+const tall = require('tall').default;
+const urlParser = require('url');
+const ipaddr = require('ipaddr.js');
+const DOT_CHARACTER = '\\.';
+const WWW = "www"
 var Nightmare = require('nightmare');
 
 var AUDIO = "audio";
@@ -22,17 +26,62 @@ function count(url, character) {
   return ( url.match( RegExp(character,'g') ) || [] ).length;
 }
 
-const DOT_CHARACTER = "\\.";
+
+function removeWWWSubdomainFromURL(url){
+  if(url && url.length > 2 && url.substring(0,3).toLowerCase() === WWW)
+    return url.substring(3);
+  return url;
+}
 
 
 export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
+    parse_url: function(callback) {
+      tall(url)
+        .then(function(unshortenedUrl) {
+          console.log('Tall url', unshortenedUrl);
+          let originalUrl = url;
+          console.log('Original url', originalUrl);
+          let urlObject = {};
+          urlObject.originalUrl = originalUrl;
+          urlObject.unshortUrl = unshortenedUrl;
+          let myUrl = urlParser.parse(unshortenedUrl);
+          myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
+          if(!myUrl.isUrlIPAddress && myUrl.host)
+            myUrl.tokenizeHost = parseDomain(url);
+          myUrl.urlLenght = unshortenedUrl.length;
+          myUrl.atSimbol = unshortenedUrl.indexOf("@") > -1 ? true : false;
+          myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
+          myUrl.dotsInSubdomainCout = 0;
+          myUrl.hasSubdomain = false;
+          if(myUrl.tokenizeHost) {
+            let filteredSubdomain = removeWWWSubdomainFromURL(myUrl.tokenizeHost.subdomain);
+            myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
+            if(filteredSubdomain)
+              myUrl.hasSubdomain = true;
+          }
+
+          dns.lookup(myUrl.hostname, function (err, address, family) {
+            myUrl.ipAddress = address;
+            myUrl.ipFamily = family;
+            urlObject.parsedUrl = myUrl;
+            console.log(urlObject);
+            callback(null, urlObject);
+          });
+
+        })
+        .catch(function(err) {
+          callback(err, null);
+        })
+      ;
+
+    },
     scarp_page: function(callback) {
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
-        .goto(url.href)
+        .goto(url)
         .wait(2000)
         .evaluate(function () {
           let hrefArray = [];
@@ -109,11 +158,11 @@ export function scanURLAndExtractFeatures(url, cb){
         })
         .end()
         .then(function (result) {
-          console.log(result);
-          callback(null, "success");
+         // console.log(result);
+          callback(null, result);
         })
         .catch(function (error) {
-          console.error('Search failed:', error);
+         // console.error('Search failed:', error);
           callback(error, null);
         });
 /*      request(url, function(err, resp, body){
@@ -184,13 +233,39 @@ export function scanURLAndExtractFeatures(url, cb){
         callback(null, linksArray);
       });*/
     },
-    dns_lookup: function(callback) {
-      dns.lookup(url.hostname, function (err, address, family) {
-        console.log('address: %j family: IPv%s', address, family);
-        callback(null, address);
-      });
+    dns_lookup: ['parse_url','scarp_page', function(results, callback) {
+      let myUrl = null;
+      if(results.scarp_page && results.parse_url && results.scarp_page.urlAddressBar && results.parse_url.unshortUrl
+        && results.scarp_page.urlAddressBar !== results.parse_url.unshortUrl) {
+        myUrl = urlParser.parse(results.scarp_page.urlAddressBar);
+        myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
+        if (!myUrl.isUrlIPAddress && myUrl.host)
+          myUrl.tokenizeHost = parseDomain(results.scarp_page.urlAddressBar);
+        myUrl.urlLenght = results.scarp_page.urlAddressBar.length;
+        myUrl.atSimbol = results.scarp_page.urlAddressBar.indexOf("@") > -1 ? true : false;
+        myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
+        myUrl.dotsInSubdomainCout = 0;
+        myUrl.hasSubdomain = false;
+        if (myUrl.tokenizeHost) {
+          let filteredSubdomain = removeWWWSubdomainFromURL(myUrl.tokenizeHost.subdomain);
+          myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
+          if (filteredSubdomain)
+            myUrl.hasSubdomain = true;
+        }
 
-    },
+        dns.lookup(myUrl.hostname, function (err, address, family) {
+          console.log('address: %j family: IPv%s', address, family);
+          myUrl.ipAddress = address;
+          myUrl.ipFamily = family;
+          console.log(myUrl);
+          callback(null, myUrl);
+        });
+      }
+      else {
+        console.log("Enters the else condition!")
+        callback(null, myUrl);
+      }
+    }],
    /* write_file: ['get_data', 'make_folder', function(results, callback) {
       console.log('in write_file', JSON.stringify(results));
       // once there is some data and the directory exists,
@@ -204,11 +279,10 @@ export function scanURLAndExtractFeatures(url, cb){
       callback(null, {'file':results.write_file, 'email':'user@example.com'});
     }]*/
   }, function(err, results) {
-    console.log('err = ', err);
-    console.log('results = ', results.scarp_page);
+   // console.log('err = ', err);
+    //console.log('results = ', results.scarp_page);
     cb(err, results.scarp_page);
   });
-
 }
 
 /*
