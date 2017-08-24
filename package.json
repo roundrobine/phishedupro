@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "main": "server/app.js",
   "dependencies": {
+    "alexarank": "^0.2.0",
     "async": "^2.5.0",
     "babel-runtime": "^5.8.20",
     "bluebird": "^2.9.34",
