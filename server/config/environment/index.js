@@ -33,7 +33,14 @@ var all = {
     moz:{
       accessId: "mozscape-6d65275f91",
       secretKey: "7945e0f265ab68e5f64c75fdc2a89024"
+    },
+    my_wot:{
+      key: "81be2449b4591061dca0500f83eb22279edff965"
     }
+  },
+
+  api_endpoints:{
+    my_wot: "http://api.mywot.com/0.4/public_link_json2"
   },
 
   // MongoDB connection options
