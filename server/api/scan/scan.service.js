@@ -8,6 +8,7 @@ const dns = require('dns');
 const tall = require('tall').default;
 const urlParser = require('url');
 const ipaddr = require('ipaddr.js');
+const alexa = require('alexarank');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 var Nightmare = require('nightmare');
@@ -37,52 +38,12 @@ function removeWWWSubdomainFromURL(url){
 export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
-    parse_url: function(callback) {
-      tall(url)
-        .then(function(unshortenedUrl) {
-          console.log('Tall url', unshortenedUrl);
-          let originalUrl = url;
-          console.log('Original url', originalUrl);
-          let urlObject = {};
-          urlObject.originalUrl = originalUrl;
-          urlObject.unshortUrl = unshortenedUrl;
-          let myUrl = urlParser.parse(unshortenedUrl);
-          myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
-          if(!myUrl.isUrlIPAddress && myUrl.host)
-            myUrl.tokenizeHost = parseDomain(url);
-          myUrl.urlLenght = unshortenedUrl.length;
-          myUrl.atSimbol = unshortenedUrl.indexOf("@") > -1 ? true : false;
-          myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
-          myUrl.dotsInSubdomainCout = 0;
-          myUrl.hasSubdomain = false;
-          if(myUrl.tokenizeHost) {
-            let filteredSubdomain = removeWWWSubdomainFromURL(myUrl.tokenizeHost.subdomain);
-            myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
-            if(filteredSubdomain)
-              myUrl.hasSubdomain = true;
-          }
-
-          dns.lookup(myUrl.hostname, function (err, address, family) {
-            myUrl.ipAddress = address;
-            myUrl.ipFamily = family;
-            urlObject.parsedUrl = myUrl;
-            console.log(urlObject);
-            callback(null, urlObject);
-          });
-
-        })
-        .catch(function(err) {
-          callback(err, null);
-        })
-      ;
-
-    },
     scarp_page: function(callback) {
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
         .goto(url)
-        .wait(2000)
+        .wait(1500)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -233,16 +194,42 @@ export function scanURLAndExtractFeatures(url, cb){
         callback(null, linksArray);
       });*/
     },
-    dns_lookup: ['parse_url','scarp_page', function(results, callback) {
+    unshort_url: function(callback) {
+      tall(url)
+        .then(function(unshortenedUrl) {
+          let urlObject = {};
+          urlObject.isShortenedURL = false;
+          let originalUrl = url;
+          urlObject.originalUrl = originalUrl;
+          urlObject.unshortUrl = unshortenedUrl;
+
+          if(originalUrl !== unshortenedUrl)
+            urlObject.isShortenedURL = true;
+
+          console.log('Tall url', unshortenedUrl);
+          console.log('Original url', originalUrl);
+          callback(null, urlObject);
+        })
+        .catch(function(err) {
+          callback(err, null);
+        })
+      ;
+
+    },
+    parse_url: ['unshort_url','scarp_page', function(results, callback) {
       let myUrl = null;
-      if(results.scarp_page && results.parse_url && results.scarp_page.urlAddressBar && results.parse_url.unshortUrl
-        && results.scarp_page.urlAddressBar !== results.parse_url.unshortUrl) {
+      if(results.scarp_page && results.scarp_page.urlAddressBar )
         myUrl = urlParser.parse(results.scarp_page.urlAddressBar);
+      else if (results.unshort_url && results.unshort_url.unshortUrl)
+        myUrl = urlParser.parse(results.unshort_url.unshortUrl);
+      else
+        myUrl = urlParser.parse(url);
+
         myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
         if (!myUrl.isUrlIPAddress && myUrl.host)
-          myUrl.tokenizeHost = parseDomain(results.scarp_page.urlAddressBar);
-        myUrl.urlLenght = results.scarp_page.urlAddressBar.length;
-        myUrl.atSimbol = results.scarp_page.urlAddressBar.indexOf("@") > -1 ? true : false;
+          myUrl.tokenizeHost = parseDomain(myUrl.href);
+        myUrl.urlLenght = myUrl.href.length;
+        myUrl.atSimbol = myUrl.href.indexOf("@") > -1 ? true : false;
         myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
         myUrl.dotsInSubdomainCout = 0;
         myUrl.hasSubdomain = false;
@@ -260,39 +247,21 @@ export function scanURLAndExtractFeatures(url, cb){
           console.log(myUrl);
           callback(null, myUrl);
         });
-      }
-      else {
-        console.log("Enters the else condition!")
-        callback(null, myUrl);
-      }
     }],
-   /* write_file: ['get_data', 'make_folder', function(results, callback) {
-      console.log('in write_file', JSON.stringify(results));
-      // once there is some data and the directory exists,
-      // write the data to a file in the directory
-      callback(null, 'filename');
-    }],
-    email_link: ['write_file', function(results, callback) {
-      console.log('in email_link', JSON.stringify(results));
-      // once the file is written let's email a link to it...
-      // results.write_file contains the filename returned by write_file.
-      callback(null, {'file':results.write_file, 'email':'user@example.com'});
-    }]*/
+    alexa_ranking: ['parse_url', function(results, callback) {
+      alexa(results.parse_url.href, function(error, result) {
+        if (!error) {
+          console.log(result);
+          callback(null, result);
+        } else {
+          console.log(error);
+          callback(err, result);
+        }
+      });
+    }]
   }, function(err, results) {
    // console.log('err = ', err);
     //console.log('results = ', results.scarp_page);
     cb(err, results.scarp_page);
   });
 }
-
-/*
-module.exports = {
-  getWeather: getWeather,
-  buildFormatedResponse: buildFormatedResponse,
-  getDailyForecastApiLink: getDailyForecastApiLink,
-  getUnitofMeasurement: getUnitofMeasurement,
-  getWeatherIconMapping: getWeatherIconMapping,
-  removeUnusedValuesFromDailyForecast: removeUnusedValuesFromDailyForecast,
-  buildFormatedResponseCurrentDay: buildFormatedResponseCurrentDay
-};
-*/
