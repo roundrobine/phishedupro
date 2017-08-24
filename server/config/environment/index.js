@@ -29,7 +29,11 @@ var all = {
 
   // Secret for session, you will want to change this and make it an environment variable
   secrets: {
-    session: 'phishedupro-secret'
+    session: 'phishedupro-secret',
+    moz:{
+      accessId: "mozscape-6d65275f91",
+      secretKey: "7945e0f265ab68e5f64c75fdc2a89024"
+    }
   },
 
   // MongoDB connection options
