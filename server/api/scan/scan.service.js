@@ -1,5 +1,5 @@
 'use strict';
-
+import config from '../../config/environment';
 const request = require('request');
 const cheerio = require('cheerio');
 const async = require('async');
@@ -11,6 +11,7 @@ const ipaddr = require('ipaddr.js');
 const alexa = require('alexarank');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
+const rp = require('request-promise');
 var Nightmare = require('nightmare');
 
 var AUDIO = "audio";
@@ -21,6 +22,7 @@ var SCRIPT = "script";
 var LINK = "link";
 var EMBED = "embed";
 var SOURCE = "source";
+
 
 //count('Yes. I want. to. place a. lot of. dots.','\\.'); //=> 6
 function count(url, character) {
@@ -34,6 +36,29 @@ function removeWWWSubdomainFromURL(url){
   return url;
 }
 
+function myWOT(url,cb){
+
+  var options = {
+    uri: config.api_endpoints.my_wot,
+    qs: {
+      hosts: url,
+      key: config.secrets.my_wot.key // -> uri + '?hosts=xxxxx%20xxxxx'
+    },
+    headers: {
+      'User-Agent': 'Request-Promise'
+    },
+    json: true // Automatically parses the JSON string in the response
+  };
+
+  rp(options)
+    .then(function (res) {
+      cb(null, res)
+    })
+    .catch(function (err) {
+      cb(err, null)
+    });
+
+}
 
 export function scanURLAndExtractFeatures(url, cb){
 
@@ -258,6 +283,17 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       });
+    }],
+    my_wot_reputation: ['parse_url', function(results, callback) {
+      myWOT(results.parse_url.href, function(err, result){
+        if (!err) {
+          console.log(result);
+          callback(null, result);
+        } else {
+          console.log(err);
+          callback(err, result);
+        }
+      })
     }]
   }, function(err, results) {
    // console.log('err = ', err);
