@@ -36,11 +36,15 @@ var all = {
     },
     my_wot:{
       key: "81be2449b4591061dca0500f83eb22279edff965"
+    },
+    whois_api:{
+      token: "c91c162c070db8939cdaae76cb4b6b35"
     }
   },
 
   api_endpoints:{
-    my_wot: "http://api.mywot.com/0.4/public_link_json2"
+    my_wot: "http://api.mywot.com/0.4/public_link_json2",
+    whois_lookup: "https://jsonwhois.com/api/v1/whois"
   },
 
   // MongoDB connection options
