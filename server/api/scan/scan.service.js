@@ -58,6 +58,29 @@ function myWOT(url,cb){
 
 }
 
+function whoisLookup(url,cb){
+
+  var options = {
+    uri: config.api_endpoints.whois_lookup,
+    qs: {
+      domain: url
+    },
+    headers: {
+      'Authorization': 'Token token=c91c162c070db8939cdaae76cb4b6b35'
+    },
+    json: true // Automatically parses the JSON string in the response
+  };
+
+  rp(options)
+    .then(function (res) {
+      cb(null, res)
+    })
+    .catch(function (err) {
+      cb(err, null)
+    });
+
+}
+
 export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
@@ -219,6 +242,19 @@ export function scanURLAndExtractFeatures(url, cb){
       myWOT(results.parse_url.href, function(err, result){
         if (!err) {
           console.log(result);
+          callback(null, result);
+        } else {
+          console.log(err);
+          callback(err, result);
+        }
+      })
+    }],
+    whois_lookup: ['parse_url', function(results, callback) {
+
+      let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+      whoisLookup(domain, function(err, result){
+        if (!err) {
+          console.log(result.created_on);
           callback(null, result);
         } else {
           console.log(err);
