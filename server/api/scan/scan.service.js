@@ -7,9 +7,11 @@ const tall = require('tall').default;
 const urlParser = require('url');
 const ipaddr = require('ipaddr.js');
 const alexa = require('alexarank');
+var rp = require('request-promise');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
-const rp = require('request-promise');
+const HTTPS = 'https:';
+
 var Nightmare = require('nightmare');
 
 var AUDIO = "audio";
@@ -37,13 +39,11 @@ function removeWWWSubdomainFromURL(url){
 function myWOT(url,cb){
 
   var options = {
+    method: 'GET',
     uri: config.api_endpoints.my_wot,
     qs: {
       hosts: url,
       key: config.secrets.my_wot.key // -> uri + '?hosts=xxxxx%20xxxxx'
-    },
-    headers: {
-      'User-Agent': 'Request-Promise'
     },
     json: true // Automatically parses the JSON string in the response
   };
@@ -61,6 +61,7 @@ function myWOT(url,cb){
 function whoisLookup(url,cb){
 
   var options = {
+    method: 'GET',
     uri: config.api_endpoints.whois_lookup,
     qs: {
       domain: url
@@ -78,6 +79,40 @@ function whoisLookup(url,cb){
     .catch(function (err) {
       cb(err, null)
     });
+
+}
+
+function sslCheck(parsedUrl,cb){
+  if(parsedUrl.protocol === HTTPS) {
+    var options = {
+      method: 'POST',
+      uri: config.api_endpoints.ssl_check,
+      body: {
+        url: parsedUrl.hostname,
+        ip: parsedUrl.ipAddress,
+        path: parsedUrl.path,
+        port: '443',
+        live_scan: 'true'
+      },
+      json: true // Automatically parses the JSON string in the response
+    };
+
+    rp(options)
+      .then(function (res) {
+        cb(null, res)
+      })
+      .catch(function (err) {
+        cb(err, null)
+      });
+
+  }
+  else
+  {
+    let isHTTPS = {};
+    isHTTPS.text = 'This website is using HTTP protocol';
+    isHTTPS.value = -1;
+    cb(null, isHTTPS)
+  }
 
 }
 
@@ -193,7 +228,6 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, null);
         })
       ;
-
     },
     parse_url: ['unshort_url','scarp_page', function(results, callback) {
       let myUrl = null;
@@ -224,7 +258,13 @@ export function scanURLAndExtractFeatures(url, cb){
           myUrl.ipAddress = address;
           myUrl.ipFamily = family;
           console.log(myUrl);
-          callback(null, myUrl);
+          if(!err) {
+            callback(null, myUrl);
+          }
+          else {
+            callback(err, myUrl);
+          }
+
         });
     }],
     alexa_ranking: ['parse_url', function(results, callback) {
@@ -250,7 +290,6 @@ export function scanURLAndExtractFeatures(url, cb){
       })
     }],
     whois_lookup: ['parse_url', function(results, callback) {
-
       let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
       whoisLookup(domain, function(err, result){
         if (!err) {
@@ -261,10 +300,19 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       })
+    }],
+    ssl_check: ['parse_url', function(results, callback) {
+      sslCheck(results.parse_url, function(err, result){
+        if (!err) {
+          console.log(result);
+          callback(null, result);
+        } else {
+          console.log(err);
+          callback(err, result);
+        }
+      })
     }]
   }, function(err, results) {
-   // console.log('err = ', err);
-    //console.log('results = ', results.scarp_page);
     cb(err, results.scarp_page);
   });
 }
