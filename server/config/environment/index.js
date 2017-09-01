@@ -44,7 +44,8 @@ var all = {
 
   api_endpoints:{
     my_wot: "http://api.mywot.com/0.4/public_link_json2",
-    whois_lookup: "https://jsonwhois.com/api/v1/whois"
+    whois_lookup: "https://jsonwhois.com/api/v1/whois",
+    ssl_check: 'http://www.ssltools.com/api/scan'
   },
 
   // MongoDB connection options
