@@ -82,6 +82,31 @@ function whoisLookup(url,cb){
 
 }
 
+
+function whoisXmlApi(url,cb){
+
+  var options = {
+    method: 'GET',
+    uri: config.api_endpoints.whois_xml_api,
+    qs: {
+      domainName: url,
+      username: config.secrets.whois_xml_api.username,
+      password: config.secrets.whois_xml_api.password,
+      outputFormat: 'JSON'
+    },
+    json: true // Automatically parses the JSON string in the response
+  };
+
+  rp(options)
+    .then(function (res) {
+      cb(null, res)
+    })
+    .catch(function (err) {
+      cb(err, null)
+    });
+
+}
+
 function sslCheck(parsedUrl,cb){
   if(parsedUrl.protocol === HTTPS) {
     var options = {
@@ -291,9 +316,9 @@ export function scanURLAndExtractFeatures(url, cb){
     }],
     whois_lookup: ['parse_url', function(results, callback) {
       let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
-      whoisLookup(domain, function(err, result){
+      whoisXmlApi(domain, function(err, result){
         if (!err) {
-          console.log(result.created_on);
+          console.log(result);
           callback(null, result);
         } else {
           console.log(err);
