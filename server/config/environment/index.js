@@ -39,13 +39,18 @@ var all = {
     },
     whois_api:{
       token: "c91c162c070db8939cdaae76cb4b6b35"
+    },
+    whois_xml_api:{
+      password: 'Tphalo8c',
+      username: 'roundrobine'
     }
   },
 
   api_endpoints:{
     my_wot: "http://api.mywot.com/0.4/public_link_json2",
     whois_lookup: "https://jsonwhois.com/api/v1/whois",
-    ssl_check: 'http://www.ssltools.com/api/scan'
+    ssl_check: 'http://www.ssltools.com/api/scan',
+    whois_xml_api: 'https://www.whoisxmlapi.com/whoisserver/WhoisService'
   },
 
   // MongoDB connection options
