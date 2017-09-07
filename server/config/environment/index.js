@@ -25,14 +25,17 @@ var all = {
   ip: process.env.IP || '0.0.0.0',
 
   // Should we populate the DB with sample data?
-  seedDB: false,
+  seedDB: true,
 
   // Secret for session, you will want to change this and make it an environment variable
   secrets: {
     session: 'phishedupro-secret',
     moz:{
       accessId: "mozscape-6d65275f91",
-      secretKey: "7945e0f265ab68e5f64c75fdc2a89024"
+      secretKey: "1cc824d64de040d5a1399478a6277177",
+      cols: '103616137253',
+      cols_extended: '144115291691993125',
+      cols_short: '144115291155087365'
     },
     my_wot:{
       key: "81be2449b4591061dca0500f83eb22279edff965"
@@ -50,7 +53,8 @@ var all = {
     my_wot: "http://api.mywot.com/0.4/public_link_json2",
     whois_lookup: "https://jsonwhois.com/api/v1/whois",
     ssl_check: 'http://www.ssltools.com/api/scan',
-    whois_xml_api: 'https://www.whoisxmlapi.com/whoisserver/WhoisService'
+    whois_xml_api: 'https://www.whoisxmlapi.com/whoisserver/WhoisService',
+    mozscape_api: 'http://lsapi.seomoz.com/linkscape/url-metrics'
   },
 
   // MongoDB connection options
