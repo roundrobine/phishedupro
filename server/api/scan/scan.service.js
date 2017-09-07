@@ -7,7 +7,8 @@ const tall = require('tall').default;
 const urlParser = require('url');
 const ipaddr = require('ipaddr.js');
 const alexa = require('alexarank');
-var rp = require('request-promise');
+const rp = require('request-promise');
+const crypto = require('crypto');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 const HTTPS = 'https:';
@@ -36,6 +37,15 @@ function removeWWWSubdomainFromURL(url){
   return url;
 }
 
+/*function generate_signature(expires) {
+  var hash = crypto.createHmac('sha1', config.secrets.moz.secretKey);
+  hash.setEncoding('base64');
+  hash.write(config.secrets.moz.accessId + '\n' + expires);
+  hash.end();
+
+  return hash.read();
+}*/
+
 function myWOT(url,cb){
 
   var options = {
@@ -46,6 +56,53 @@ function myWOT(url,cb){
       key: config.secrets.my_wot.key // -> uri + '?hosts=xxxxx%20xxxxx'
     },
     json: true // Automatically parses the JSON string in the response
+  };
+
+  rp(options)
+    .then(function (res) {
+      cb(null, res)
+    })
+    .catch(function (err) {
+      cb(err, null)
+    });
+
+}
+
+
+function mozscapeApiCall(url,cb){
+
+  // Set your expires times for several minutes into the future.
+  // An expires time excessively far in the future will not be honored by the Mozscape API.
+  // Divide the result of Date.now() by 1000 to make sure your result is in seconds.
+  let expires = Math.round((new Date().getTime()) / 1000 + 300);
+  //var expires = Date.now() + 300;
+  let apiUrl = config.api_endpoints.mozscape_api + "/" + encodeURIComponent(url);
+  let accessID = config.secrets.moz.accessId;
+  let secretKey = config.secrets.moz.secretKey;
+
+  // Put each parameter on a new line.
+  let stringToSign = accessID + "\n" + expires;
+
+  //create the hmac hash and Base64-encode it.
+  let signature = crypto.createHmac('sha1', secretKey).update(stringToSign).digest('base64');
+  let auth = Buffer.from(`${accessID}:${secretKey}`).toString('base64');
+
+  //URL-encode the result of the above.
+  signature = encodeURIComponent(generate_signature(expires));
+
+  var options = {
+    method: 'GET',
+    uri: apiUrl,
+    qs: {
+      Cols: config.secrets.moz.cols_extended,
+      AccessID: accessID,
+      Expires: expires,
+      Signature: signature
+    },
+    headers: {
+      Authorization: `Basic ${auth}`
+    },
+    json:true
   };
 
   rp(options)
@@ -333,6 +390,18 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(null, result);
         } else {
           console.log(err);
+          callback(err, result);
+        }
+      })
+    }],
+    mozscape_api_call: ['parse_url', function(results, callback) {
+      let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+      mozscapeApiCall(domain, function(err, result){
+        if (!err) {
+          console.log(result);
+          callback(null, result);
+        } else {
+          //console.log(err);
           callback(err, result);
         }
       })
