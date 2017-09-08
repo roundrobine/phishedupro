@@ -88,7 +88,7 @@ function mozscapeApiCall(url,cb){
   let auth = Buffer.from(`${accessID}:${secretKey}`).toString('base64');
 
   //URL-encode the result of the above.
-  signature = encodeURIComponent(generate_signature(expires));
+  signature = encodeURIComponent(expires);
 
   var options = {
     method: 'GET',
@@ -151,12 +151,19 @@ function whoisXmlApi(url,cb){
       password: config.secrets.whois_xml_api.password,
       outputFormat: 'JSON'
     },
+    resolveWithFullResponse: true,
     json: true // Automatically parses the JSON string in the response
   };
 
   rp(options)
     .then(function (res) {
-      cb(null, res)
+      if (res.statusCode !== 200) {
+        console.log('Request failed: ' + res.statusCode);
+        cb(err, null)
+      }
+      else {
+        cb(null, res.body)
+      }
     })
     .catch(function (err) {
       cb(err, null)
@@ -210,16 +217,19 @@ export function scanURLAndExtractFeatures(url, cb){
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
-          let scriptArray = [];
-          let linkArray = [];
           let formArray = [];
           let iFrameArray = [];
           let inputTextArray = [];
+          let linksInTags = [];
 
-          let linkArrayTemp = document.querySelectorAll("link");
-          for (let i=0;i<linkArrayTemp.length;i++) {
-            if (linkArrayTemp[i].href)
-              linkArray.push(linkArrayTemp[i].href);
+          let linksInTagsTemp = document.querySelectorAll("link, script");
+          for (let i=0;i<linksInTagsTemp.length;i++) {
+            if (linksInTagsTemp[i].href) {
+              linksInTags.push(linksInTagsTemp[i].href);
+            }
+            else if (linksInTagsTemp[i].src) {
+              linksInTags.push(linksInTagsTemp[i].src);
+            }
           }
 
           let hrefArrayTemp = document.querySelectorAll("a");
@@ -234,11 +244,6 @@ export function scanURLAndExtractFeatures(url, cb){
               reqURLArray.push(reqURLArrayTemp[i].src);
           }
 
-          let scriptArrayTemp = document.querySelectorAll("script");
-          for (let i=0;i<scriptArrayTemp.length;i++) {
-            if (scriptArrayTemp[i].src)
-              scriptArray.push(scriptArrayTemp[i].src);
-          }
 
           let formArrayTemp = document.querySelectorAll("form");
           let formObject = {hasForm:false};
@@ -272,8 +277,7 @@ export function scanURLAndExtractFeatures(url, cb){
           return {
             "hrefArray": hrefArray,
             "reqURLArray": reqURLArray,
-            "scriptArray": scriptArray,
-            "linkArray": linkArray,
+            "linksInTags": linksInTags,
             "formObject": formObject,
             "iFrameArray": iFrameArray,
             "inputTextArray": inputTextArray,
