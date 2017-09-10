@@ -1,5 +1,6 @@
 'use strict';
 import config from '../../config/environment';
+const MY_WOT = require('./scan.config').MY_WOT;
 const async = require('async');
 const parseDomain = require("parse-domain");
 const dns = require('dns');
@@ -12,6 +13,8 @@ const crypto = require('crypto');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 const HTTPS = 'https:';
+const TRUSTWORTHINESS = "0";
+const CHILD_SAFETY = "4";
 
 var Nightmare = require('nightmare');
 
@@ -45,6 +48,173 @@ function removeWWWSubdomainFromURL(url){
 
   return hash.read();
 }*/
+
+function switchMyWOTCategories(category){
+  let categoryDescription = '';
+  switch(category) {
+    case MY_WOT.CATEGORY.C_101.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_101.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_102.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_102.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_103.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_103.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_104.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_104.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_105.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_105.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_201.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_201.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_202.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_202.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_203.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_203.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_204.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_204.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_205.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_205.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_206.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_206.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_207.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_207.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_301.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_301.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_302.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_302.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_303.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_303.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_304.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_304.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_401.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_401.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_402.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_402.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_403.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_403.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_404.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_404.DESCRIPTION;
+      break;
+    case MY_WOT.CATEGORY.C_501.VALUE:
+      categoryDescription = MY_WOT.CATEGORY.C_501.DESCRIPTION;
+      break;
+    default:
+      categoryDescription = "Unknown category!";
+  }
+
+  return categoryDescription;
+
+}
+
+
+function switchWOTBlacklists(blacklist) {
+  let blacklistDescription = '';
+  switch (blacklist) {
+    case MY_WOT.BLACKLIST_TYPE.MALWARE.NAME:
+      blacklistDescription = MY_WOT.BLACKLIST_TYPE.MALWARE.DESCRIPTION;
+      break;
+    case MY_WOT.BLACKLIST_TYPE.PHISHING.NAME:
+      blacklistDescription = MY_WOT.BLACKLIST_TYPE.PHISHING.DESCRIPTION;
+      break;
+    case MY_WOT.BLACKLIST_TYPE.SCAM.NAME:
+      blacklistDescription = MY_WOT.BLACKLIST_TYPE.SCAM.DESCRIPTION;
+      break;
+    case MY_WOT.BLACKLIST_TYPE.SPAM.NAME:
+      blacklistDescription = MY_WOT.BLACKLIST_TYPE.SPAM.DESCRIPTION;
+      break;
+    default:
+      blacklistDescription = "Unknown blacklist!";
+  }
+
+   return blacklistDescription;
+}
+
+
+function extractValuablePhishingAttributesFromApiResults(results, cb){
+
+    let scanModel = {};
+
+    if(results){
+      if(results.scarp_page){
+        scanModel.crawlerResults = results.scarp_page;
+      }
+      if(results.unshort_url){
+        scanModel.unshortUrl = results.unshort_url;
+      }
+      if(results.parse_url){
+        scanModel.parsedUrl = results.unshort_url;
+      }
+      if(results.alexa_ranking){
+        if(results.alexa_ranking.rank) {
+          scanModel.alexaRank = results.alexa_ranking.rank;
+          scanModel.isAlexaRanked = true;
+        }
+        else{
+          scanModel.isAlexaRanked = false;
+        }
+      }
+      if(results.my_wot_reputation && results.parse_url){
+        let hostName = results.parse_url.hostname;
+        scanModel.myWOT = {};
+        if (results.my_wot_reputation[hostName]){
+          if(results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS]) {
+            scanModel.myWOT.trustworthiness = results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS];
+           }
+          if (results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY]) {
+            scanModel.myWOT.childSafety = results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY];
+          }
+          if (results.my_wot_reputation[hostName][MY_WOT.CATEGORIES]) {
+              let categories = results.my_wot_reputation[hostName][MY_WOT.CATEGORIES];
+              scanModel.myWOT.categories = [];
+              for (let prop in categories) {
+                if (categories.hasOwnProperty(prop)) {
+                  let category = {};
+                  console.log(prop + " -> " + categories[prop]);
+                  category.description = switchMyWOTCategories(prop);
+                  category.code = prop;
+                  category.value = categories[prop];
+                  scanModel.myWOT.categories.push(category);
+                }
+              }
+          }
+          if(results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS]){
+            let blacklists = results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS];
+            scanModel.myWOT.blacklists = {};
+            for (let prop in blacklists) {
+              if (blacklists.hasOwnProperty(prop)) {
+                let blacklist = {};
+                console.log(prop + " -> " + blacklists[prop]);
+                blacklist.description = switchWOTBlacklists(prop);
+                blacklist.type = prop;
+                blacklist.blacklistedOn = new Date(blacklists[prop] * 1000);
+                scanModel.myWOT.blacklists.push(blacklist);
+              }
+            }
+          }
+
+        }
+      }
+
+    }
+
+}
 
 function myWOT(url,cb){
 
@@ -353,7 +523,7 @@ export function scanURLAndExtractFeatures(url, cb){
 
         });
     }],
-    alexa_ranking: ['parse_url', function(results, callback) {
+    /*alexa_ranking: ['parse_url', function(results, callback) {
       alexa(results.parse_url.href, function(error, result) {
         if (!error) {
           console.log(result);
@@ -363,7 +533,7 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       });
-    }],
+    }],*/
     my_wot_reputation: ['parse_url', function(results, callback) {
       myWOT(results.parse_url.href, function(err, result){
         if (!err) {
@@ -375,9 +545,9 @@ export function scanURLAndExtractFeatures(url, cb){
         }
       })
     }],
-    whois_lookup: ['parse_url', function(results, callback) {
-      let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
-      whoisXmlApi(domain, function(err, result){
+   /* whois_lookup: ['parse_url', function(results, callback) {
+      //let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+      whoisXmlApi(results.parse_url.hostname, function(err, result){
         if (!err) {
           console.log(result);
           callback(null, result);
@@ -386,8 +556,8 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       })
-    }],
-    ssl_check: ['parse_url', function(results, callback) {
+    }],*/
+   /* ssl_check: ['parse_url', function(results, callback) {
       sslCheck(results.parse_url, function(err, result){
         if (!err) {
           console.log(result);
@@ -397,10 +567,10 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       })
-    }],
+    }],*/
     mozscape_api_call: ['parse_url', function(results, callback) {
-      let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
-      mozscapeApiCall(domain, function(err, result){
+      //let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+      mozscapeApiCall(results.parse_url.href, function(err, result){
         if (!err) {
           console.log(result);
           callback(null, result);
