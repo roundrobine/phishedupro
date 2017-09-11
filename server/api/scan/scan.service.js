@@ -159,28 +159,35 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
         scanModel.unshortUrl = results.unshort_url;
       }
       if(results.parse_url){
-        scanModel.parsedUrl = results.unshort_url;
+        scanModel.parsedUrl = results.parse_url;
       }
       if(results.alexa_ranking){
+        scanModel.alexa = {};
         if(results.alexa_ranking.rank) {
-          scanModel.alexaRank = results.alexa_ranking.rank;
-          scanModel.isAlexaRanked = true;
+          scanModel.alexa.rank = results.alexa_ranking.rank;
+          scanModel.alexa.isRanked = true;
         }
         else{
-          scanModel.isAlexaRanked = false;
+          scanModel.alexa.isRanked = false;
         }
       }
       if(results.my_wot_reputation && results.parse_url){
         let hostName = results.parse_url.hostname;
-        scanModel.myWOT = {};
+        scanModel.myWOT = {
+          hasWOTStatistics: false,
+          isBlacklisted: false
+        };
         if (results.my_wot_reputation[hostName]){
           if(results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS]) {
             scanModel.myWOT.trustworthiness = results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS];
+            scanModel.myWOT.hasWOTStatistics = true;
            }
           if (results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY]) {
             scanModel.myWOT.childSafety = results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY];
+            scanModel.myWOT.hasWOTStatistics = true;
           }
           if (results.my_wot_reputation[hostName][MY_WOT.CATEGORIES]) {
+              scanModel.myWOT.hasWOTStatistics = true;
               let categories = results.my_wot_reputation[hostName][MY_WOT.CATEGORIES];
               scanModel.myWOT.categories = [];
               for (let prop in categories) {
@@ -195,6 +202,8 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
               }
           }
           if(results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS]){
+            scanModel.myWOT.hasWOTStatistics = true;
+            scanModel.isBlacklisted = true;
             let blacklists = results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS];
             scanModel.myWOT.blacklists = {};
             for (let prop in blacklists) {
@@ -211,9 +220,11 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
 
         }
       }
-
+      cb(null, scanModel);
     }
-
+    else{
+      cb(new Error("Result object is null!"), null);
+    }
 }
 
 function myWOT(url,cb){
@@ -383,7 +394,7 @@ export function scanURLAndExtractFeatures(url, cb){
       console.log('it enters');
       nightmare
         .goto(url)
-        .wait(1500)
+        .wait(2000)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -523,7 +534,7 @@ export function scanURLAndExtractFeatures(url, cb){
 
         });
     }],
-    /*alexa_ranking: ['parse_url', function(results, callback) {
+    alexa_ranking: ['parse_url', function(results, callback) {
       alexa(results.parse_url.href, function(error, result) {
         if (!error) {
           console.log(result);
@@ -533,7 +544,7 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       });
-    }],*/
+    }],
     my_wot_reputation: ['parse_url', function(results, callback) {
       myWOT(results.parse_url.href, function(err, result){
         if (!err) {
@@ -568,7 +579,7 @@ export function scanURLAndExtractFeatures(url, cb){
         }
       })
     }],*/
-    mozscape_api_call: ['parse_url', function(results, callback) {
+   /* mozscape_api_call: ['parse_url', function(results, callback) {
       //let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
       mozscapeApiCall(results.parse_url.href, function(err, result){
         if (!err) {
@@ -579,8 +590,14 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       })
-    }]
+    }]*/
   }, function(err, results) {
-    cb(err, results.scarp_page);
+    extractValuablePhishingAttributesFromApiResults(results, function(error, res){
+      if(!err)
+        cb(null, res);
+      else
+        cb(err, res);
+    })
+
   });
 }
