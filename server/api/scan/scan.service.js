@@ -10,23 +10,14 @@ const ipaddr = require('ipaddr.js');
 const alexa = require('alexarank');
 const rp = require('request-promise');
 const crypto = require('crypto');
+const validUrl = require('valid-url');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 const HTTPS = 'https:';
-const TRUSTWORTHINESS = "0";
-const CHILD_SAFETY = "4";
-
+const HASH = "#";
+const LAST_ELEMENT_IN_ARRAY = -1;
+const FIRST_ELEMENT_IN_ARRAY = 0;
 var Nightmare = require('nightmare');
-
-var AUDIO = "audio";
-var VIDEO = "video";
-var IMG = "img";
-var ANCHOR = "a";
-var SCRIPT = "script";
-var LINK = "link";
-var EMBED = "embed";
-var SOURCE = "source";
-
 
 //count('Yes. I want. to. place a. lot of. dots.','\\.'); //=> 6
 function count(url, character) {
@@ -147,25 +138,109 @@ function switchWOTBlacklists(blacklist) {
 }
 
 
+function urlOfAnchorStatistics(anchorArray, parsedUrl){
+  let urlOfAnchor = {
+    totalNumOfLinks:0,
+    validNumOfLinks:0,
+    invalidNumOfLinks:0,
+    validLinksArray: [],
+    invalidLinksArray: []
+  };
+  let invalidLinks = 0;
+  let total = 0;
+  let validLinks = 0;
+  let nextUrl = null;
+
+  let baseHostNoSubdomain = "";
+  let newHostNoSubdomain = "";
+
+  if(!parsedUrl.isUrlIPAddress)
+    baseHostNoSubdomain = parsedUrl.tokenizeHost.domain + "." + parsedUrl.tokenizeHost.tld;
+
+  anchorArray.forEach(function(url){
+
+    nextUrl = urlParser.parse(url);
+    console.log(nextUrl);
+    if(nextUrl && nextUrl.hostname)
+      nextUrl.isUrlIPAddress = ipaddr.isValid(nextUrl.hostname);
+
+
+    if (!nextUrl.isUrlIPAddress && nextUrl.hostname) {
+      nextUrl.tokenizeHost = parseDomain(nextUrl.host);
+      newHostNoSubdomain = nextUrl.tokenizeHost.domain + "." + nextUrl.tokenizeHost.tld;
+    }
+    if(nextUrl && parsedUrl && validUrl.isUri(nextUrl.href)) {
+      if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
+
+        if (nextUrl.path === parsedUrl.path) {
+          invalidLinks = invalidLinks + 1;
+          urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+        }
+        else {
+          validLinks = validLinks + 1;
+          urlOfAnchor.validLinksArray.push(nextUrl.href);
+        }
+      }
+      else if(newHostNoSubdomain && baseHostNoSubdomain && newHostNoSubdomain === baseHostNoSubdomain){
+          validLinks = validLinks + 1;
+          urlOfAnchor.validLinksArray.push(nextUrl.href);
+      }
+      else{
+          invalidLinks = invalidLinks + 1;
+          urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+      }
+    }
+    else{
+      invalidLinks = invalidLinks + 1;
+      urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+    }
+
+  });
+
+
+  urlOfAnchor.validNumOfLinks = validLinks;
+  urlOfAnchor.invalidNumOfLinks = invalidLinks;
+  urlOfAnchor.totalNumOfLinks = anchorArray.length;
+
+  return urlOfAnchor;
+
+}
+
+
 function extractValuablePhishingAttributesFromApiResults(results, cb){
 
     let scanModel = {};
 
     if(results){
+
+      scanModel.satistics = {};
       if(results.scarp_page){
         scanModel.crawlerResults = results.scarp_page;
+        scanModel.satistics.anchor = urlOfAnchorStatistics(results.scarp_page.hrefArray, results.parse_url);
       }
       if(results.unshort_url){
         scanModel.unshortUrl = results.unshort_url;
+        scanModel.satistics.tinyURL  = scanModel.unshortUrl.isShortenedURL;
       }
       if(results.parse_url){
         scanModel.parsedUrl = results.parse_url;
+        scanModel.satistics.atSymbol = scanModel.parsedUrl.atSimbol;
+        scanModel.satistics.hasPrefixOrSufix = scanModel.parsedUrl.prefixSufix;
+        scanModel.satistics.subdomains = 0;
+        if(scanModel.parsedUrl.hasSubdomain) {
+          scanModel.satistics.subdomains = scanModel.parsedUrl.dotsInSubdomainCout + 1;
+        }
+        scanModel.satistics.isIPAddress = scanModel.parsedUrl.isUrlIPAddress;
+        scanModel.satistics.urlLenght = scanModel.parsedUrl.urlLenght;
+
       }
       if(results.alexa_ranking){
         scanModel.alexa = {};
+        scanModel.satistics.websiteTrafficAlexa = 0;
         if(results.alexa_ranking.rank) {
           scanModel.alexa.rank = results.alexa_ranking.rank;
           scanModel.alexa.isRanked = true;
+          scanModel.satistics.websiteTrafficAlexa = results.alexa_ranking.rank;
         }
         else{
           scanModel.alexa.isRanked = false;
@@ -177,10 +252,13 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
           hasWOTStatistics: false,
           isBlacklisted: false
         };
+        scanModel.satistics.isBlacklisted = false;
+
         if (results.my_wot_reputation[hostName]){
           if(results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS]) {
             scanModel.myWOT.trustworthiness = results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS];
             scanModel.myWOT.hasWOTStatistics = true;
+            scanModel.satistics.myWOTReputation = scanModel.myWOT.trustworthiness[0];
            }
           if (results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY]) {
             scanModel.myWOT.childSafety = results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY];
@@ -204,6 +282,7 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
           if(results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS]){
             scanModel.myWOT.hasWOTStatistics = true;
             scanModel.isBlacklisted = true;
+            scanModel.satistics.isBlacklisted = true;
             let blacklists = results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS];
             scanModel.myWOT.blacklists = {};
             for (let prop in blacklists) {
@@ -394,7 +473,7 @@ export function scanURLAndExtractFeatures(url, cb){
       console.log('it enters');
       nightmare
         .goto(url)
-        .wait(2000)
+        .wait(1500)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -506,8 +585,9 @@ export function scanURLAndExtractFeatures(url, cb){
         myUrl = urlParser.parse(url);
 
         myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
-        if (!myUrl.isUrlIPAddress && myUrl.host)
-          myUrl.tokenizeHost = parseDomain(myUrl.href);
+        if (!myUrl.isUrlIPAddress) {
+          myUrl.tokenizeHost = parseDomain(myUrl.hostname);
+        }
         myUrl.urlLenght = myUrl.href.length;
         myUrl.atSimbol = myUrl.href.indexOf("@") > -1 ? true : false;
         myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
