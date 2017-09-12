@@ -14,9 +14,7 @@ const validUrl = require('valid-url');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 const HTTPS = 'https:';
-const HASH = "#";
-const LAST_ELEMENT_IN_ARRAY = -1;
-const FIRST_ELEMENT_IN_ARRAY = 0;
+const JAVA_SCRIPT_VOID_0 = "javascript:void(0)";
 var Nightmare = require('nightmare');
 
 //count('Yes. I want. to. place a. lot of. dots.','\\.'); //=> 6
@@ -137,12 +135,17 @@ function switchWOTBlacklists(blacklist) {
    return blacklistDescription;
 }
 
+function calculatePercentage(total, amount){
+  return Math.round((amount / total) * 100);
+}
+
 
 function urlOfAnchorStatistics(anchorArray, parsedUrl){
   let urlOfAnchor = {
     totalNumOfLinks:0,
     validNumOfLinks:0,
     invalidNumOfLinks:0,
+    percentage : 0,
     validLinksArray: [],
     invalidLinksArray: []
   };
@@ -151,14 +154,14 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
   let validLinks = 0;
   let nextUrl = null;
 
-  let baseHostNoSubdomain = "";
-  let newHostNoSubdomain = "";
+  let baseHostNoSubdomain = null;
+  let newHostNoSubdomain = null;
 
   if(!parsedUrl.isUrlIPAddress)
     baseHostNoSubdomain = parsedUrl.tokenizeHost.domain + "." + parsedUrl.tokenizeHost.tld;
 
   anchorArray.forEach(function(url){
-
+    newHostNoSubdomain = null;
     nextUrl = urlParser.parse(url);
     console.log(nextUrl);
     if(nextUrl && nextUrl.hostname)
@@ -173,6 +176,10 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
       if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
 
         if (nextUrl.path === parsedUrl.path) {
+          invalidLinks = invalidLinks + 1;
+          urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+        }
+        else if(nextUrl.href.toLowerCase() === JAVA_SCRIPT_VOID_0){
           invalidLinks = invalidLinks + 1;
           urlOfAnchor.invalidLinksArray.push(nextUrl.href);
         }
@@ -201,6 +208,9 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
   urlOfAnchor.validNumOfLinks = validLinks;
   urlOfAnchor.invalidNumOfLinks = invalidLinks;
   urlOfAnchor.totalNumOfLinks = anchorArray.length;
+  if(urlOfAnchor.invalidNumOfLinks > 0) {
+    urlOfAnchor.percentage = calculatePercentage(urlOfAnchor.totalNumOfLinks, urlOfAnchor.invalidNumOfLinks);
+  }
 
   return urlOfAnchor;
 
@@ -216,7 +226,12 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
       scanModel.satistics = {};
       if(results.scarp_page){
         scanModel.crawlerResults = results.scarp_page;
-        scanModel.satistics.anchor = urlOfAnchorStatistics(results.scarp_page.hrefArray, results.parse_url);
+        scanModel.crawlerResults.urlOfAnchorsStats = urlOfAnchorStatistics(results.scarp_page.hrefArray, results.parse_url);
+        scanModel.satistics.urlOfAnchorPrc = scanModel.crawlerResults.urlOfAnchorsStats.percentage;
+        scanModel.crawlerResults.requestUrlsStats = urlOfAnchorStatistics(results.scarp_page.reqURLArray, results.parse_url);
+        scanModel.satistics.requestUrlsPrc = scanModel.crawlerResults.requestUrlsStats.percentage;
+        scanModel.crawlerResults.linksInTagsStats = urlOfAnchorStatistics(results.scarp_page.linksInTags, results.parse_url);
+        scanModel.satistics.linksInTagsPrc = scanModel.crawlerResults.linksInTagsStats.percentage;
       }
       if(results.unshort_url){
         scanModel.unshortUrl = results.unshort_url;
