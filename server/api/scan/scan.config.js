@@ -28,6 +28,10 @@ const MY_WOT = {
     VERY_POOR: {
       NAME: "Very poor",
       VALUE: 0
+    },
+    UNKNOWN: {
+      NAME: "Unknown",
+      VALUE: -2
     }
   },
   CATEGORY:{
