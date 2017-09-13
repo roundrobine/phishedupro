@@ -15,6 +15,17 @@ const DOT_CHARACTER = '\\.';
 const WWW = "www"
 const HTTPS = 'https:';
 const JAVA_SCRIPT_VOID_0 = "javascript:void(0)";
+const LEGITIMATE = 1;
+const PHISHING = -1;
+const SUSPICIOUS = 0;
+const ABOUT_BLANK = "about:blank";
+const HASH = "#";
+const INPUT_TYPE_TEXT = "text";
+const INPUT_TYPE_PASSWORD = "password";
+const INPUT_TYPE_EMAIL = "email";
+const INPUT_TYPE_TEL = "tel";
+const UNKNOWN = -2;
+
 var Nightmare = require('nightmare');
 
 //count('Yes. I want. to. place a. lot of. dots.','\\.'); //=> 6
@@ -150,7 +161,6 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
     invalidLinksArray: []
   };
   let invalidLinks = 0;
-  let total = 0;
   let validLinks = 0;
   let nextUrl = null;
 
@@ -163,7 +173,6 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
   anchorArray.forEach(function(url){
     newHostNoSubdomain = null;
     nextUrl = urlParser.parse(url);
-    console.log(nextUrl);
     if(nextUrl && nextUrl.hostname)
       nextUrl.isUrlIPAddress = ipaddr.isValid(nextUrl.hostname);
 
@@ -217,45 +226,114 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
 }
 
 
+function serverFormHandlerStatistics(form, parsedUrl){
+  let sfh = SUSPICIOUS;
+  let nextUrl = null;
+
+  if(!form.hasForm && !form.formArray){
+    return sfh = LEGITIMATE;
+  }
+
+  form.actionArray.forEach(function (url) {
+      nextUrl = urlParser.parse(url);
+
+      if (nextUrl && parsedUrl && validUrl.isUri(nextUrl.href)) {
+        if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
+          if (nextUrl.path === parsedUrl.path && nextUrl.hash === HASH) {
+            return sfh = PHISHING;
+          }
+          else {
+            sfh = LEGITIMATE;
+          }
+        }
+        else if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname !== parsedUrl.hostname) {
+          sfh = SUSPICIOUS;
+        }
+        else {
+          return sfh = PHISHING;
+        }
+      }
+      else if (url && url.toLowerCase() === ABOUT_BLANK) {
+        return sfh = PHISHING;
+      }
+
+    });
+    return sfh;
+}
+
+function getTextInputFieldsStatistics(inputFieldsArray){
+  let inputFiledsStatisitcs = {
+    numOfTextfields: 0,
+    numOfPasswordFields:0
+  }
+  inputFieldsArray.forEach(function (inputFieldType) {
+    if(inputFieldType.trim() === INPUT_TYPE_TEXT || inputFieldType.trim() === INPUT_TYPE_EMAIL || inputFieldType.trim() === INPUT_TYPE_TEL){
+      inputFiledsStatisitcs.numOfTextfields = inputFiledsStatisitcs.numOfTextfields +1;
+    }
+    else if(inputFieldType.trim() === INPUT_TYPE_PASSWORD){
+      inputFiledsStatisitcs.numOfPasswordFields = inputFiledsStatisitcs.numOfPasswordFields +1;
+    }
+  })
+  return inputFiledsStatisitcs;
+}
+
+
 function extractValuablePhishingAttributesFromApiResults(results, cb){
 
     let scanModel = {};
 
     if(results){
 
-      scanModel.satistics = {};
+      scanModel.statistics = {};
       if(results.scarp_page){
-        scanModel.crawlerResults = results.scarp_page;
+        scanModel.crawlerResults = {};
         scanModel.crawlerResults.urlOfAnchorsStats = urlOfAnchorStatistics(results.scarp_page.hrefArray, results.parse_url);
-        scanModel.satistics.urlOfAnchorPrc = scanModel.crawlerResults.urlOfAnchorsStats.percentage;
+        if(scanModel.crawlerResults.urlOfAnchorsStats.totalNumOfLinks === 0){
+          scanModel.statistics.urlOfAnchorPrc = 100;
+          scanModel.crawlerResults.urlOfAnchorsStats.percentage = 100;
+        }
+        else {
+          scanModel.statistics.urlOfAnchorPrc = scanModel.crawlerResults.urlOfAnchorsStats.percentage;
+        }
         scanModel.crawlerResults.requestUrlsStats = urlOfAnchorStatistics(results.scarp_page.reqURLArray, results.parse_url);
-        scanModel.satistics.requestUrlsPrc = scanModel.crawlerResults.requestUrlsStats.percentage;
+        scanModel.statistics.requestUrlsPrc = scanModel.crawlerResults.requestUrlsStats.percentage;
         scanModel.crawlerResults.linksInTagsStats = urlOfAnchorStatistics(results.scarp_page.linksInTags, results.parse_url);
-        scanModel.satistics.linksInTagsPrc = scanModel.crawlerResults.linksInTagsStats.percentage;
+        scanModel.statistics.linksInTagsPrc = scanModel.crawlerResults.linksInTagsStats.percentage;
+        scanModel.crawlerResults.serverFormHandler = results.scarp_page.formObject;
+        scanModel.statistics.sfh = serverFormHandlerStatistics(results.scarp_page.formObject, results.parse_url);
+        scanModel.crawlerResults.iFrame = results.scarp_page.iFrameArray;
+        if(results.scarp_page.iFrameArray.length > 0) {
+          scanModel.statistics.iframe = true;
+        }
+        else {
+          scanModel.statistics.iframe = false;
+        }
+        scanModel.crawlerResults.inputs = results.scarp_page.inputTextArray;
+        scanModel.statistics.inputFieldsStatistics = getTextInputFieldsStatistics(results.scarp_page.inputTextArray);
       }
       if(results.unshort_url){
         scanModel.unshortUrl = results.unshort_url;
-        scanModel.satistics.tinyURL  = scanModel.unshortUrl.isShortenedURL;
+        scanModel.statistics.tinyURL  = scanModel.unshortUrl.isShortenedURL;
       }
       if(results.parse_url){
         scanModel.parsedUrl = results.parse_url;
-        scanModel.satistics.atSymbol = scanModel.parsedUrl.atSimbol;
-        scanModel.satistics.hasPrefixOrSufix = scanModel.parsedUrl.prefixSufix;
-        scanModel.satistics.subdomains = 0;
+        scanModel.statistics.atSymbol = scanModel.parsedUrl.atSimbol;
+        scanModel.statistics.hasPrefixOrSufix = scanModel.parsedUrl.prefixSufix;
+        scanModel.statistics.subdomains = 0;
         if(scanModel.parsedUrl.hasSubdomain) {
-          scanModel.satistics.subdomains = scanModel.parsedUrl.dotsInSubdomainCout + 1;
+          scanModel.statistics.subdomains = scanModel.parsedUrl.dotsInSubdomainCout + 1;
         }
-        scanModel.satistics.isIPAddress = scanModel.parsedUrl.isUrlIPAddress;
-        scanModel.satistics.urlLenght = scanModel.parsedUrl.urlLenght;
+        scanModel.statistics.isIPAddress = scanModel.parsedUrl.isUrlIPAddress;
+        scanModel.statistics.urlLenght = scanModel.parsedUrl.urlLenght;
 
       }
       if(results.alexa_ranking){
         scanModel.alexa = {};
-        scanModel.satistics.websiteTrafficAlexa = 0;
+        scanModel.statistics.websiteTrafficAlexa = UNKNOWN;
         if(results.alexa_ranking.rank) {
           scanModel.alexa.rank = results.alexa_ranking.rank;
           scanModel.alexa.isRanked = true;
-          scanModel.satistics.websiteTrafficAlexa = results.alexa_ranking.rank;
+          scanModel.statistics.websiteTrafficAlexa = results.alexa_ranking.rank;
         }
         else{
           scanModel.alexa.isRanked = false;
@@ -267,13 +345,14 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
           hasWOTStatistics: false,
           isBlacklisted: false
         };
-        scanModel.satistics.isBlacklisted = false;
+        scanModel.statistics.isBlacklisted = false;
+        scanModel.statistics.myWOTReputation = MY_WOT.REPUTATION.UNKNOWN.VALUE;
 
         if (results.my_wot_reputation[hostName]){
           if(results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS]) {
             scanModel.myWOT.trustworthiness = results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS];
             scanModel.myWOT.hasWOTStatistics = true;
-            scanModel.satistics.myWOTReputation = scanModel.myWOT.trustworthiness[0];
+            scanModel.statistics.myWOTReputation = scanModel.myWOT.trustworthiness[0];
            }
           if (results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY]) {
             scanModel.myWOT.childSafety = results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY];
@@ -286,7 +365,6 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
               for (let prop in categories) {
                 if (categories.hasOwnProperty(prop)) {
                   let category = {};
-                  console.log(prop + " -> " + categories[prop]);
                   category.description = switchMyWOTCategories(prop);
                   category.code = prop;
                   category.value = categories[prop];
@@ -296,8 +374,8 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
           }
           if(results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS]){
             scanModel.myWOT.hasWOTStatistics = true;
-            scanModel.isBlacklisted = true;
-            scanModel.satistics.isBlacklisted = true;
+            scanModel.myWOT.isBlacklisted = true;
+            scanModel.statistics.isBlacklisted = true;
             let blacklists = results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS];
             scanModel.myWOT.blacklists = {};
             for (let prop in blacklists) {
@@ -540,7 +618,8 @@ export function scanURLAndExtractFeatures(url, cb){
           }
 
 
-          let inputTextArrayTemp = document.querySelectorAll("input[type='password'], input[type='text'], input[type='email']");
+          let inputTextArrayTemp = document.querySelectorAll("input[type='password'], input[type='text']," +
+            " input[type='email'], input[type='tel']");
           for (let i=0;i<inputTextArrayTemp.length;i++) {
             if (inputTextArrayTemp[i])
               inputTextArray.push(inputTextArrayTemp[i].type);
@@ -651,8 +730,7 @@ export function scanURLAndExtractFeatures(url, cb){
         }
       })
     }],
-   /* whois_lookup: ['parse_url', function(results, callback) {
-      //let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+    whois_lookup: ['parse_url', function(results, callback) {
       whoisXmlApi(results.parse_url.hostname, function(err, result){
         if (!err) {
           console.log(result);
@@ -662,7 +740,7 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       })
-    }],*/
+    }],
    /* ssl_check: ['parse_url', function(results, callback) {
       sslCheck(results.parse_url, function(err, result){
         if (!err) {
