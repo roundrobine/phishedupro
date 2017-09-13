@@ -108,21 +108,6 @@ export function show(req, res) {
 
 // Creates a new Scan in the DB
 export function create(req, res) {
- /* var myUrl = url.parse(req.body.myUrl);
-  myUrl.isUrlIPAddress = ipaddr.isValid(myUrl.hostname);
-  if(!myUrl.isUrlIPAddress && myUrl.host)
-    myUrl.tokenizeHost = parseDomain(req.body.myUrl);
-  myUrl.urlLenght = req.body.myUrl.length;
-  myUrl.atSimbol = req.body.myUrl.indexOf("@") > -1 ? true : false;
-  myUrl.prefixSufix = myUrl.hostname.indexOf("-") > -1 ? true : false;
-  myUrl.dotsInSubdomainCout = 0;
-  myUrl.hasSubdomain = false;
-  if(myUrl.tokenizeHost) {
-    let filteredSubdomain = removeWWWSubdomainFromURL(myUrl.tokenizeHost.subdomain);
-    myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
-    if(filteredSubdomain)
-      myUrl.hasSubdomain = true;
-  }*/
     ScanService.scanURLAndExtractFeatures(req.body.myUrl, function(err, result) {
       if(err)
         return res.status(500).send(err);
