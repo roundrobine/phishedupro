@@ -1,5 +1,6 @@
 'use strict';
 import config from '../../config/environment';
+import _ from 'lodash';
 const MY_WOT = require('./scan.config').MY_WOT;
 const async = require('async');
 const parseDomain = require("parse-domain");
@@ -26,6 +27,7 @@ const INPUT_TYPE_PASSWORD = "password";
 const INPUT_TYPE_EMAIL = "email";
 const INPUT_TYPE_TEL = "tel";
 const UNKNOWN = -2;
+const WHOIS_DATE_FORMAT = "YYYY-MM-DD HH:mm:ss Z";
 
 var Nightmare = require('nightmare');
 
@@ -353,19 +355,19 @@ function extractValuablePhishingAttributesFromApiResults(results){
 
         if(results.whois_lookup.WhoisRecord.registryData) {
           if (results.whois_lookup.WhoisRecord.registryData.createdDateNormalized) {
-            scanModel.whoisRecord.createdDate = new Date(results.whois_lookup.WhoisRecord.registryData.createdDateNormalized);
+            scanModel.whoisRecord.createdDate = moment(results.whois_lookup.WhoisRecord.registryData.createdDateNormalized,WHOIS_DATE_FORMAT);
           }
           if (results.whois_lookup.WhoisRecord.registryData.updatedDateNormalized) {
-            scanModel.whoisRecord.updatedDate = new Date(results.whois_lookup.WhoisRecord.registryData.updatedDateNormalized);
+            scanModel.whoisRecord.updatedDate = moment(results.whois_lookup.WhoisRecord.registryData.updatedDateNormalized,WHOIS_DATE_FORMAT);
           }
           if (results.whois_lookup.WhoisRecord.registryData.expiresDateNormalized) {
-            scanModel.whoisRecord.expiresDate = new Date(results.whois_lookup.WhoisRecord.registryData.expiresDateNormalized);
+            scanModel.whoisRecord.expiresDate = moment(results.whois_lookup.WhoisRecord.registryData.expiresDateNormalized,WHOIS_DATE_FORMAT);
           }
         }
 
         if (scanModel.whoisRecord.createdDate && scanModel.whoisRecord.expiresDate) {
-          let from = moment(scanModel.whoisRecord.createdDate);
-          let to = moment(scanModel.whoisRecord.expiresDate);
+          let from = scanModel.whoisRecord.createdDate;
+          let to = scanModel.whoisRecord.expiresDate;
           scanModel.whoisRecord.expiresInDays = to.diff(from, "days");
         }
 
@@ -376,6 +378,71 @@ function extractValuablePhishingAttributesFromApiResults(results){
         scanModel.statistics.ageOfDomain = scanModel.whoisRecord.domainAgeDays;
         scanModel.statistics.domainRegistrationLength = scanModel.whoisRecord.expiresInDays;
 
+      }
+      if(results.ssl_check){
+        scanModel.sslCertificate = {
+          issuer: null,
+          san_entries: [],
+          existInSANEntries: false,
+          trustedCA: false,
+          certType: null,
+          completeCertChain: false,
+          isRevoked: false,
+          validFrom: null,
+          validTo: null,
+          certificateDuration: UNKNOWN,
+          expiresIn: UNKNOWN
+        }
+        if(results.ssl_check.response) {
+          if (results.ssl_check.response.issuer) {
+            scanModel.sslCertificate.issuer = results.ssl_check.response.issuer.CN;
+          }
+          if(results.ssl_check.response.valid_from){
+            console.log("valid from date ssl");
+            scanModel.sslCertificate.validFrom = moment(results.ssl_check.response.valid_from);
+          }
+          if(results.ssl_check.response.valid_to){
+            console.log("valid to date ssl");
+            scanModel.sslCertificate.validTo = moment(results.ssl_check.response.valid_to);
+          }
+          if(results.ssl_check.response.san_entries){
+            scanModel.sslCertificate.san_entries = results.ssl_check.response.san_entries;
+            if(results.ssl_check.response.subject && results.ssl_check.response.subject.CN) {
+
+              scanModel.sslCertificate.existInSANEntries = _.some(scanModel.sslCertificate.san_entries, function (url) {
+                return url === results.ssl_check.response.subject.CN
+              });
+            }
+          }
+          if(results.ssl_check.response.cert_type){
+            scanModel.sslCertificate.certType = results.ssl_check.response.cert_type;
+          }
+          if(results.ssl_check.response.chain_of_trust_complete){
+            scanModel.sslCertificate.completeCertChain = results.ssl_check.response.chain_of_trust_complete;
+          }
+          if(results.ssl_check.response.revoked){
+            scanModel.sslCertificate.isRevoked = results.ssl_check.response.revoked;
+          }
+          if(!results.ssl_check.response.self_signed){
+            scanModel.sslCertificate.trustedCA = true;
+          }
+          if(results.ssl_check.response.cert_type){
+            scanModel.sslCertificate.certType = results.ssl_check.response.cert_type;
+          }
+          if(scanModel.sslCertificate.validFrom && scanModel.sslCertificate.validTo){
+            let from = scanModel.sslCertificate.validFrom;
+            let to = scanModel.sslCertificate.validTo;
+            scanModel.sslCertificate.certificateDuration = to.diff(from, "days");
+            scanModel.sslCertificate.expiresIn = to.diff(moment(), "days");
+          }
+
+          scanModel.statistics.ssl = {
+            duration: scanModel.sslCertificate.certificateDuration,
+            isTrusted: scanModel.sslCertificate.trustedCA,
+            expiresIn: scanModel.sslCertificate.expiresIn,
+            completeCertChain: scanModel.sslCertificate.completeCertChain
+          };
+        }
       }
       if(results.my_wot_reputation && results.parse_url){
         let hostName = results.parse_url.hostname;
@@ -558,6 +625,7 @@ function whoisXmlApi(url,cb){
 }
 
 function sslCheck(parsedUrl,cb){
+  let isHTTPS = false;
   if(parsedUrl.protocol === HTTPS) {
     var options = {
       method: 'POST',
@@ -583,9 +651,7 @@ function sslCheck(parsedUrl,cb){
   }
   else
   {
-    let isHTTPS = {};
-    isHTTPS.text = 'This website is using HTTP protocol';
-    isHTTPS.value = -1;
+    isHTTPS = false;
     cb(null, isHTTPS)
   }
 
@@ -755,10 +821,10 @@ export function scanURLAndExtractFeatures(url, cb){
     my_wot_reputation: ['parse_url', function(results, callback) {
       myWOT(results.parse_url.href, function(err, result){
         if (!err) {
-          console.log(result);
+          //console.log(result);
           callback(null, result);
         } else {
-          console.log(err);
+          //console.log(err);
           callback(err, result);
         }
       })
@@ -766,27 +832,27 @@ export function scanURLAndExtractFeatures(url, cb){
     whois_lookup: ['parse_url', function(results, callback) {
       whoisXmlApi(results.parse_url.hostname, function(err, result){
         if (!err) {
-          console.log(result);
+          //console.log(result);
+          console.log("Enters in whoisLookap right part");
           return  callback(null, result);
         } else {
           console.log(err);
           return callback(err);
         }
       })
-    }]
-   /* ssl_check: ['parse_url', function(results, callback) {
+    }],
+    ssl_check: ['parse_url', function(results, callback) {
       sslCheck(results.parse_url, function(err, result){
         if (!err) {
-          console.log(result);
+          //console.log(result);
           callback(null, result);
         } else {
           console.log(err);
           callback(err, result);
         }
       })
-    }],*/
-   /* mozscape_api_call: ['parse_url', function(results, callback) {
-      //let domain = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+    }],
+    mozscape_api_call: ['parse_url', function(results, callback) {
       mozscapeApiCall(results.parse_url.href, function(err, result){
         if (!err) {
           console.log(result);
@@ -796,14 +862,14 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(err, result);
         }
       })
-    }]*/
+    }]
   }, function(err, results) {
     if(!err) {
       let scanStatistics = extractValuablePhishingAttributesFromApiResults(results);
       cb(null, scanStatistics)
     }
     else{
-      cb(err, "An error has happend!");
+      cb(err, "An error has occurred!");
     }
 
   });
