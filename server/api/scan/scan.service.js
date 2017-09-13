@@ -11,6 +11,7 @@ const alexa = require('alexarank');
 const rp = require('request-promise');
 const crypto = require('crypto');
 const validUrl = require('valid-url');
+var moment = require('moment');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 const HTTPS = 'https:';
@@ -278,7 +279,7 @@ function getTextInputFieldsStatistics(inputFieldsArray){
 }
 
 
-function extractValuablePhishingAttributesFromApiResults(results, cb){
+function extractValuablePhishingAttributesFromApiResults(results){
 
     let scanModel = {};
 
@@ -339,6 +340,43 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
           scanModel.alexa.isRanked = false;
         }
       }
+      if(results.whois_lookup && results.whois_lookup.WhoisRecord){
+
+       scanModel.whoisRecord = {
+          createdDate: null,
+          updatedDate: null,
+          expiresDate: null,
+          lookupDate: new Date(),
+          domainAgeDays: UNKNOWN,
+          expiresInDays: UNKNOWN
+        }
+
+        if(results.whois_lookup.WhoisRecord.registryData) {
+          if (results.whois_lookup.WhoisRecord.registryData.createdDateNormalized) {
+            scanModel.whoisRecord.createdDate = new Date(results.whois_lookup.WhoisRecord.registryData.createdDateNormalized);
+          }
+          if (results.whois_lookup.WhoisRecord.registryData.updatedDateNormalized) {
+            scanModel.whoisRecord.updatedDate = new Date(results.whois_lookup.WhoisRecord.registryData.updatedDateNormalized);
+          }
+          if (results.whois_lookup.WhoisRecord.registryData.expiresDateNormalized) {
+            scanModel.whoisRecord.expiresDate = new Date(results.whois_lookup.WhoisRecord.registryData.expiresDateNormalized);
+          }
+        }
+
+        if (scanModel.whoisRecord.createdDate && scanModel.whoisRecord.expiresDate) {
+          let from = moment(scanModel.whoisRecord.createdDate);
+          let to = moment(scanModel.whoisRecord.expiresDate);
+          scanModel.whoisRecord.expiresInDays = to.diff(from, "days");
+        }
+
+        if(results.whois_lookup.WhoisRecord.estimatedDomainAge){
+          scanModel.whoisRecord.domainAgeDays = results.whois_lookup.WhoisRecord.estimatedDomainAge;
+        }
+
+        scanModel.statistics.ageOfDomain = scanModel.whoisRecord.domainAgeDays;
+        scanModel.statistics.domainRegistrationLength = scanModel.whoisRecord.expiresInDays;
+
+      }
       if(results.my_wot_reputation && results.parse_url){
         let hostName = results.parse_url.hostname;
         scanModel.myWOT = {
@@ -377,7 +415,7 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
             scanModel.myWOT.isBlacklisted = true;
             scanModel.statistics.isBlacklisted = true;
             let blacklists = results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS];
-            scanModel.myWOT.blacklists = {};
+            scanModel.myWOT.blacklists = [];
             for (let prop in blacklists) {
               if (blacklists.hasOwnProperty(prop)) {
                 let blacklist = {};
@@ -392,10 +430,10 @@ function extractValuablePhishingAttributesFromApiResults(results, cb){
 
         }
       }
-      cb(null, scanModel);
+      return scanModel;
     }
     else{
-      cb(new Error("Result object is null!"), null);
+      return null;
     }
 }
 
@@ -504,22 +542,17 @@ function whoisXmlApi(url,cb){
       password: config.secrets.whois_xml_api.password,
       outputFormat: 'JSON'
     },
-    resolveWithFullResponse: true,
     json: true // Automatically parses the JSON string in the response
   };
 
   rp(options)
     .then(function (res) {
-      if (res.statusCode !== 200) {
-        console.log('Request failed: ' + res.statusCode);
-        cb(err, null)
-      }
-      else {
-        cb(null, res.body)
-      }
+      console.log("Enters in then!");
+      return cb(null, res)
     })
     .catch(function (err) {
-      cb(err, null)
+      console.log("Enters in catch!");
+      return cb(err)
     });
 
 }
@@ -715,7 +748,7 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(null, result);
         } else {
           console.log(error);
-          callback(err, result);
+          callback(error, result);
         }
       });
     }],
@@ -734,13 +767,13 @@ export function scanURLAndExtractFeatures(url, cb){
       whoisXmlApi(results.parse_url.hostname, function(err, result){
         if (!err) {
           console.log(result);
-          callback(null, result);
+          return  callback(null, result);
         } else {
           console.log(err);
-          callback(err, result);
+          return callback(err);
         }
       })
-    }],
+    }]
    /* ssl_check: ['parse_url', function(results, callback) {
       sslCheck(results.parse_url, function(err, result){
         if (!err) {
@@ -765,12 +798,13 @@ export function scanURLAndExtractFeatures(url, cb){
       })
     }]*/
   }, function(err, results) {
-    extractValuablePhishingAttributesFromApiResults(results, function(error, res){
-      if(!err)
-        cb(null, res);
-      else
-        cb(err, res);
-    })
+    if(!err) {
+      let scanStatistics = extractValuablePhishingAttributesFromApiResults(results);
+      cb(null, scanStatistics)
+    }
+    else{
+      cb(err, "An error has happend!");
+    }
 
   });
 }
