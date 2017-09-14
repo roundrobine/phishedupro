@@ -141,13 +141,70 @@ const MY_WOT = {
 
 }
 
-
-
-
+const MOZCAPE = {
+  ut:{
+    name: "title",
+    description:"The title of the page, if available",
+    bit_flag: 1
+  },
+  uu:{
+    name: "canonicalURL",
+    description:"The canonical form of the URL",
+    bit_flag: 4
+  },
+  ueid:{
+    name: "externalEquityLinks",
+    description:"The number of external equity links to the URL",
+    bit_flag: 32
+  },
+  uid:{
+    name: "links",
+    description:"The number of links (equity or nonequity or not, internal or external) to the URL",
+    bit_flag: 2048
+  },
+  umrp:{
+    name: "mozRankURLNormalized",
+    description:"The MozRank of the URL, in the normalized 10-point score (umrp)",
+    bit_flag: 16384
+  },
+  umrr:{
+    name: "mozRankURLRaw",
+    description:"The MozRank of the URL, in the raw score (umrr)",
+    bit_flag: 16384
+  },
+  fmrp:{
+    name: "mozRankSubdomainNormalized",
+    description:"The MozRank of the URL's subdomain, in the normalized 10-point score (fmrp)",
+    bit_flag: 32768
+  },
+  fmrr:{
+    name: "mozRankSubdomainRaw",
+    description:"The MozRank of the URL's subdomain, in the raw score (fmrr)",
+    bit_flag: 32768
+  },
+  us:{
+    name: "httpStatusCode",
+    description:"The HTTP status code recorded by Mozscape for this URL, if available",
+    bit_flag: 536870912
+  },
+  upa:{
+    name: "pageAuthority",
+    description:"A normalized 100-point score representing the likelihood of a page to rank well in search engine results",
+    bit_flag: 34359738368
+  },
+  pda:{
+    name: "domainAuthority",
+    description:"A normalized 100-point score representing the likelihood of a domain to rank well in search engine results",
+    bit_flag: 68719476736
+  },
+  ulc:{
+    name: "timeLastCrawled",
+    description:"The time and date on which Mozscape last crawled the URL, returned in Unix epoch format",
+    bit_flag: 144115188075855872
+  }
+}
 
 module.exports = {
-
-  // My_WOT Config variable
-  MY_WOT: MY_WOT
-
+  MY_WOT: MY_WOT,
+  MOZCAPE: MOZCAPE
 };
