@@ -2,6 +2,7 @@
 import config from '../../config/environment';
 import _ from 'lodash';
 const MY_WOT = require('./scan.config').MY_WOT;
+const MOZCAPE = require('./scan.config').MOZCAPE;
 const async = require('async');
 const parseDomain = require("parse-domain");
 const dns = require('dns');
@@ -216,7 +217,6 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
 
   });
 
-
   urlOfAnchor.validNumOfLinks = validLinks;
   urlOfAnchor.invalidNumOfLinks = invalidLinks;
   urlOfAnchor.totalNumOfLinks = anchorArray.length;
@@ -225,7 +225,6 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
   }
 
   return urlOfAnchor;
-
 }
 
 
@@ -442,6 +441,21 @@ function extractValuablePhishingAttributesFromApiResults(results){
             expiresIn: scanModel.sslCertificate.expiresIn,
             completeCertChain: scanModel.sslCertificate.completeCertChain
           };
+        }
+      }
+      if(results.mozscape_api_call){
+        let mozscape = results.mozscape_api_call;
+        scanModel.mozscape = {};
+        for (let prop in mozscape) {
+          if (mozscape.hasOwnProperty(prop)) {
+            let propName = MOZCAPE[prop].name;
+            scanModel.mozscape[propName] = mozscape[prop];
+          }
+        }
+        scanModel.statistics.mozscape = {
+          mozRankURL: scanModel.mozscape.mozRankURLNormalized,
+          pageAuthority: scanModel.mozscape.pageAuthority,
+          domainAuthority: scanModel.mozscape.domainAuthority
         }
       }
       if(results.my_wot_reputation && results.parse_url){
