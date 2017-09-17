@@ -373,6 +373,11 @@ function extractValuablePhishingAttributesFromApiResults(results){
         if(results.whois_lookup.WhoisRecord.estimatedDomainAge){
           scanModel.whoisRecord.domainAgeDays = results.whois_lookup.WhoisRecord.estimatedDomainAge;
         }
+        else if(scanModel.whoisRecord.createdDate){
+          let from = scanModel.whoisRecord.createdDate;
+          let to = moment();
+          scanModel.whoisRecord.domainAgeDays = to.diff(from, "days");
+        }
 
         scanModel.statistics.ageOfDomain = scanModel.whoisRecord.domainAgeDays;
         scanModel.statistics.domainRegistrationLength = scanModel.whoisRecord.expiresInDays;
@@ -770,8 +775,15 @@ export function scanURLAndExtractFeatures(url, cb){
           urlObject.originalUrl = originalUrl;
           urlObject.unshortUrl = unshortenedUrl;
 
-          if(originalUrl !== unshortenedUrl)
+          if(originalUrl !== unshortenedUrl) {
+
+           let originalParsedUrl =  urlParser.parse(originalUrl);
+           let unshortenedParsedUrl = urlParser.parse(unshortenedUrl);
+
+           if(originalParsedUrl && unshortenedParsedUrl && originalParsedUrl.hostname && unshortenedParsedUrl.hostname
+           && originalParsedUrl.hostname !== unshortenedParsedUrl.hostname)
             urlObject.isShortenedURL = true;
+          }
 
           console.log('Tall url', unshortenedUrl);
           console.log('Original url', originalUrl);
@@ -872,7 +884,7 @@ export function scanURLAndExtractFeatures(url, cb){
           console.log(result);
           callback(null, result);
         } else {
-          //console.log(err);
+          console.log(err);
           callback(err, result);
         }
       })
