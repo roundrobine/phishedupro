@@ -139,7 +139,7 @@ const MY_WOT = {
     }
   }
 
-}
+};
 
 const MOZCAPE = {
   ut:{
@@ -202,9 +202,98 @@ const MOZCAPE = {
     description:"The time and date on which Mozscape last crawled the URL, returned in Unix epoch format",
     bit_flag: 144115188075855872
   }
-}
+};
+
+
+const TOP_PHISHING_DOMAINS = [
+  "esy.es",
+  "hol.es",
+  "000webhostapp.com",
+  "for-our.info",
+  "bit.ly",
+  "16mb.com",
+  "for-our.info",
+  "beget.tech",
+  "blogspot.com",
+  "weebly.com",
+  "raymannag.ch",
+  "96.lt",
+  "totalsolution.com.br",
+  "sellercancelordernotification.com",
+  "kloshpro.com",
+  "webcindario.com",
+  "manageaccount-disputepaymentebay-paymentresolve.com",
+  "myjino.ru",
+  "tripod.com",
+  "u-telcom.net",
+  "clan.su",
+  "my1.ru",
+  "w-reia.com",
+  "pe.hu",
+  "ucoz.pl",
+]
+
+const TOP_PHISHING_IP_ADDRESSES = [
+  "146.112.61.108",
+  "31.170.160.61",
+  "67.199.248.11",
+  "67.199.248.10",
+  "69.50.209.78",
+  "192.254.172.78",
+  "216.58.193.65",
+  "23.234.229.68",
+  "173.212.223.160",
+  "60.249.179.122",
+  "200.219.245.41",
+  "50.31.138.222",
+  "200.219.245.53",
+  "200.219.245.194",
+  "213.174.157.151",
+  "209.202.252.50",
+  "95.110.230.232"
+]
+
+const TOP_PHISHING_KEYWORDS = [
+  "paypal",
+  "facebook",
+  "google",
+  "microsoft",
+  "jpmorganchase",
+  "apple",
+  "bcb",
+  "dropbox",
+  "yahoo",
+  "amazon",
+  "santander",
+  "aol",
+  "irs",
+  "anz"
+]
+
+const WHITELISTED_DOMAINS = [
+  "paypal.com",
+  "facebook.com",
+  "google.com",
+  "microsoft.com",
+  "jpmorganchase.com",
+  "apple.com",
+  "bbamericas.com",
+  "bcb.gov.br",
+  "amazon.com",
+  "dropbox.com",
+  "yahoo.com",
+  "santanderbank.com",
+  "santander.co.uk",
+  "aol.com",
+  "irs.gov",
+  "anz.com.au"
+]
 
 module.exports = {
   MY_WOT: MY_WOT,
-  MOZCAPE: MOZCAPE
+  MOZCAPE: MOZCAPE,
+  TOP_PHISHING_DOMAINS: TOP_PHISHING_DOMAINS,
+  TOP_PHISHING_IP_ADDRESSES: TOP_PHISHING_IP_ADDRESSES,
+  TOP_PHISHING_KEYWORDS: TOP_PHISHING_KEYWORDS,
+  WHITELISTED_DOMAINS: WHITELISTED_DOMAINS
 };
