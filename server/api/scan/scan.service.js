@@ -3,6 +3,11 @@ import config from '../../config/environment';
 import _ from 'lodash';
 const MY_WOT = require('./scan.config').MY_WOT;
 const MOZCAPE = require('./scan.config').MOZCAPE;
+const TOP_PHISHING_DOMAINS = require('./scan.config').TOP_PHISHING_DOMAINS;
+const TOP_PHISHING_IP_ADDRESSES = require('./scan.config').TOP_PHISHING_IP_ADDRESSES;
+const TOP_PHISHING_KEYWORDS = require('./scan.config').TOP_PHISHING_KEYWORDS;
+const WHITELISTED_DOMAINS = require('./scan.config').WHITELISTED_DOMAINS;
+
 const async = require('async');
 const parseDomain = require("parse-domain");
 const dns = require('dns');
@@ -180,34 +185,35 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
     if(nextUrl && nextUrl.hostname)
       nextUrl.isUrlIPAddress = ipaddr.isValid(nextUrl.hostname);
 
+    if(validUrl.isHttpUri(nextUrl.href) || validUrl.isHttpsUri(nextUrl.href)) {
+      if (!nextUrl.isUrlIPAddress && nextUrl.hostname) {
+        nextUrl.tokenizeHost = parseDomain(nextUrl.hostname);
+        newHostNoSubdomain = nextUrl.tokenizeHost.domain + "." + nextUrl.tokenizeHost.tld;
+      }
+      if (nextUrl && parsedUrl) {
+        if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
 
-    if (!nextUrl.isUrlIPAddress && nextUrl.hostname) {
-      nextUrl.tokenizeHost = parseDomain(nextUrl.host);
-      newHostNoSubdomain = nextUrl.tokenizeHost.domain + "." + nextUrl.tokenizeHost.tld;
-    }
-    if(nextUrl && parsedUrl && validUrl.isUri(nextUrl.href)) {
-      if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
-
-        if (nextUrl.path === parsedUrl.path) {
-          invalidLinks = invalidLinks + 1;
-          urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+          if (nextUrl.pathname === parsedUrl.pathname) {
+            invalidLinks = invalidLinks + 1;
+            urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+          }
+          else if (nextUrl.href.toLowerCase() === JAVA_SCRIPT_VOID_0) {
+            invalidLinks = invalidLinks + 1;
+            urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+          }
+          else {
+            validLinks = validLinks + 1;
+            urlOfAnchor.validLinksArray.push(nextUrl.href);
+          }
         }
-        else if(nextUrl.href.toLowerCase() === JAVA_SCRIPT_VOID_0){
-          invalidLinks = invalidLinks + 1;
-          urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+        else if (newHostNoSubdomain && baseHostNoSubdomain && newHostNoSubdomain === baseHostNoSubdomain) {
+          validLinks = validLinks + 1;
+          urlOfAnchor.validLinksArray.push(nextUrl.href);
         }
         else {
-          validLinks = validLinks + 1;
-          urlOfAnchor.validLinksArray.push(nextUrl.href);
-        }
-      }
-      else if(newHostNoSubdomain && baseHostNoSubdomain && newHostNoSubdomain === baseHostNoSubdomain){
-          validLinks = validLinks + 1;
-          urlOfAnchor.validLinksArray.push(nextUrl.href);
-      }
-      else{
           invalidLinks = invalidLinks + 1;
           urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+        }
       }
     }
     else{
@@ -287,9 +293,9 @@ function extractValuablePhishingAttributesFromApiResults(results){
     if(results){
 
       scanModel.statistics = {};
-      if(results.scarp_page){
+      if(results.scrap_page){
         scanModel.crawlerResults = {};
-        scanModel.crawlerResults.urlOfAnchorsStats = urlOfAnchorStatistics(results.scarp_page.hrefArray, results.parse_url);
+        scanModel.crawlerResults.urlOfAnchorsStats = urlOfAnchorStatistics(results.scrap_page.hrefArray, results.parse_url);
         if(scanModel.crawlerResults.urlOfAnchorsStats.totalNumOfLinks === 0){
           scanModel.statistics.urlOfAnchorPrc = 100;
           scanModel.crawlerResults.urlOfAnchorsStats.percentage = 100;
@@ -297,21 +303,21 @@ function extractValuablePhishingAttributesFromApiResults(results){
         else {
           scanModel.statistics.urlOfAnchorPrc = scanModel.crawlerResults.urlOfAnchorsStats.percentage;
         }
-        scanModel.crawlerResults.requestUrlsStats = urlOfAnchorStatistics(results.scarp_page.reqURLArray, results.parse_url);
+        scanModel.crawlerResults.requestUrlsStats = urlOfAnchorStatistics(results.scrap_page.reqURLArray, results.parse_url);
         scanModel.statistics.requestUrlsPrc = scanModel.crawlerResults.requestUrlsStats.percentage;
-        scanModel.crawlerResults.linksInTagsStats = urlOfAnchorStatistics(results.scarp_page.linksInTags, results.parse_url);
+        scanModel.crawlerResults.linksInTagsStats = urlOfAnchorStatistics(results.scrap_page.linksInTags, results.parse_url);
         scanModel.statistics.linksInTagsPrc = scanModel.crawlerResults.linksInTagsStats.percentage;
-        scanModel.crawlerResults.serverFormHandler = results.scarp_page.formObject;
-        scanModel.statistics.sfh = serverFormHandlerStatistics(results.scarp_page.formObject, results.parse_url);
-        scanModel.crawlerResults.iFrame = results.scarp_page.iFrameArray;
-        if(results.scarp_page.iFrameArray.length > 0) {
+        scanModel.crawlerResults.serverFormHandler = results.scrap_page.formObject;
+        scanModel.statistics.sfh = serverFormHandlerStatistics(results.scrap_page.formObject, results.parse_url);
+        scanModel.crawlerResults.iFrame = results.scrap_page.iFrameArray;
+        if(results.scrap_page.iFrameArray.length > 0) {
           scanModel.statistics.iframe = true;
         }
         else {
           scanModel.statistics.iframe = false;
         }
-        scanModel.crawlerResults.inputs = results.scarp_page.inputTextArray;
-        scanModel.statistics.inputFieldsStatistics = getTextInputFieldsStatistics(results.scarp_page.inputTextArray);
+        scanModel.crawlerResults.inputs = results.scrap_page.inputTextArray;
+        scanModel.statistics.inputFieldsStatistics = getTextInputFieldsStatistics(results.scrap_page.inputTextArray);
       }
       if(results.unshort_url){
         scanModel.unshortUrl = results.unshort_url;
@@ -462,6 +468,54 @@ function extractValuablePhishingAttributesFromApiResults(results){
           pageAuthority: scanModel.mozscape.pageAuthority,
           domainAuthority: scanModel.mozscape.domainAuthority
         }
+      }
+      if(results.parse_url){
+
+        scanModel.urlStatisitcs = {
+          topPhishingDomain: false,
+          topPhishingDomainValue: "",
+          topPhishingIP: false,
+          topPhishingIPValue: "",
+          topPhishingKeyword: false,
+          topPhishingKeywordValue: "",
+          whitelistedDomain: false,
+          whitelistedDomainValue: ""
+        };
+
+        let target = null;
+        let targetWithPath = null;
+
+        if(results.parse_url.tokenizeHost){
+          target = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+          if(results.parse_url.pathname) {
+            targetWithPath = results.parse_url.hostname + results.parse_url.pathname;
+          }
+          else{
+            targetWithPath = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+          }
+
+          scanModel.urlStatisitcs.topPhishingKeyword = _.some(TOP_PHISHING_KEYWORDS, function(keyword){
+            scanModel.urlStatisitcs.topPhishingKeywordValue = keyword;
+            console.log(targetWithPath + " " + keyword);
+            return _.includes(targetWithPath, keyword);
+          });
+
+          scanModel.urlStatisitcs.topPhishingDomain = _.some(TOP_PHISHING_DOMAINS, function (url) {
+            return url === target
+          });
+
+          scanModel.urlStatisitcs.whitelistedDomain = _.some(WHITELISTED_DOMAINS, function (urlWhitelisted) {
+            return urlWhitelisted === target
+          });
+
+          if(results.parse_url.ipAddress) {
+            scanModel.urlStatisitcs.topPhishingIP = _.some(TOP_PHISHING_IP_ADDRESSES, function (ip) {
+              return ip === results.parse_url.ipAddress
+            });
+          }
+
+        }
+
       }
       if(results.my_wot_reputation && results.parse_url){
         let hostName = results.parse_url.hostname;
@@ -679,12 +733,34 @@ function sslCheck(parsedUrl,cb){
 export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
-    scarp_page: function(callback) {
+    get_final_url: function(callback){
+      var nightmareUrl = Nightmare({ show: false });
+      nightmareUrl
+        .goto(url)
+        /*.wait(300)*/
+        .evaluate(function () {
+          let urlAddressBar = window.location.href;
+          return {
+            "finalUrl": urlAddressBar
+          };
+        })
+        .end()
+        .then(function (result) {
+           console.log(result);
+          callback(null, result);
+        })
+        .catch(function (error) {
+          console.error('Search failed:', error);
+          callback(error, null);
+        });
+
+    },
+    scrap_page: function(callback) {
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
         .goto(url)
-        .wait(1500)
+        .wait(1010)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -753,16 +829,16 @@ export function scanURLAndExtractFeatures(url, cb){
             "formObject": formObject,
             "iFrameArray": iFrameArray,
             "inputTextArray": inputTextArray,
-            "urlAddressBar": urlAddressBar
+            "finalUrl": urlAddressBar
           };
         })
         .end()
         .then(function (result) {
-         // console.log(result);
+          //console.log(result);
           callback(null, result);
         })
         .catch(function (error) {
-         // console.error('Search failed:', error);
+          console.error('Search failed:', error);
           callback(error, null);
         });
     },
@@ -773,9 +849,9 @@ export function scanURLAndExtractFeatures(url, cb){
           urlObject.isShortenedURL = false;
           let originalUrl = url;
           urlObject.originalUrl = originalUrl;
-          urlObject.unshortUrl = unshortenedUrl;
+          urlObject.unshortUrl = null;
 
-          if(originalUrl !== unshortenedUrl) {
+          if(originalUrl !== unshortenedUrl && validUrl.isUri(unshortenedUrl)) {
 
            let originalParsedUrl =  urlParser.parse(originalUrl);
            let unshortenedParsedUrl = urlParser.parse(unshortenedUrl);
@@ -783,6 +859,7 @@ export function scanURLAndExtractFeatures(url, cb){
            if(originalParsedUrl && unshortenedParsedUrl && originalParsedUrl.hostname && unshortenedParsedUrl.hostname
            && originalParsedUrl.hostname !== unshortenedParsedUrl.hostname)
             urlObject.isShortenedURL = true;
+            urlObject.unshortUrl = unshortenedUrl;
           }
 
           console.log('Tall url', unshortenedUrl);
@@ -794,10 +871,10 @@ export function scanURLAndExtractFeatures(url, cb){
         })
       ;
     },
-    parse_url: ['unshort_url','scarp_page', function(results, callback) {
+    parse_url: ['unshort_url','get_final_url', function(results, callback) {
       let myUrl = null;
-      if(results.scarp_page && results.scarp_page.urlAddressBar )
-        myUrl = urlParser.parse(results.scarp_page.urlAddressBar);
+      if(results.get_final_url && results.get_final_url.finalUrl )
+        myUrl = urlParser.parse(results.get_final_url.finalUrl);
       else if (results.unshort_url && results.unshort_url.unshortUrl)
         myUrl = urlParser.parse(results.unshort_url.unshortUrl);
       else
