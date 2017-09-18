@@ -109,8 +109,10 @@ export function show(req, res) {
 // Creates a new Scan in the DB
 export function create(req, res) {
     ScanService.scanURLAndExtractFeatures(req.body.myUrl, function(err, result) {
-      if(err)
+      if(err) {
+        console.log(err, result);
         return res.status(500).send(err);
+      }
       res.status(200).json(result);
     });
 
