@@ -375,7 +375,6 @@ function extractValuablePhishingAttributesFromApiResults(results){
 
           scanModel.urlStatisitcs.topPhishingKeyword = _.some(TOP_PHISHING_KEYWORDS, function(keyword){
             scanModel.urlStatisitcs.topPhishingKeywordValue = keyword;
-            console.log(targetWithPath.toLowerCase() + " " + keyword);
             return _.includes(targetWithPath.toLowerCase(), keyword);
           });
 
