@@ -159,7 +159,7 @@ Rule.find({}).removeAsync()
     },{
       name: 'PageRank Mozescape',
       code: 'PR',
-      weight: 0.611,
+      weight: 0.008,
       description: 'MozRank quantifies link popularity and is Moz’s version of Google’s classic PageRank algorithm. ' +
       'Pages earn MozRank based on the other pages on the web that link to them and the MozRank of those linking pages. ' +
       'The higher the MozRank of the linking pages, the higher the MozRank of the page receiving those links. ' +
@@ -171,7 +171,7 @@ Rule.find({}).removeAsync()
     },{
       name: 'Page Authority Mozescape',
       code: 'PA',
-      weight: 0.611,
+      weight: 0.0847,
       description: 'Page Authority (PA) is a score developed by Moz that predicts how well a specific page will rank on' +
       'search engine result pages (SERP). Page Authority scores range from one to 100, with higher scores corresponding ' +
       'to a greater ability to rank. Page Authority is based on data from the Mozscape web index and includes ' +
@@ -183,7 +183,7 @@ Rule.find({}).removeAsync()
     },{
       name: 'Domain Authority',
       code: 'DA',
-      weight: 0.611,
+      weight: 0.0847,
       description: 'Domain Authority (DA) is a search engine ranking score developed by Moz that predicts how well' +
       'a website will rank on search engine result pages (SERPs). A Domain Authority score ranges from one to 100, ' +
       'with higher scores corresponding to a greater ability to rank. Domain Authority is calculated by evaluating ' +
@@ -194,7 +194,7 @@ Rule.find({}).removeAsync()
     },{
       name: 'Number of Links Pointing to Page',
       code: 'NLPP',
-      weight: 0.611,
+      weight: 0.004,
       description: 'The number of links pointing to the webpage indicates its legitimacy level, even if some links are ' +
       'of the same domain (Dean, 2014). In our datasets and due to its short life span, we find that 98% of ' +
       'phishing dataset items have no links pointing to them. On the other hand, legitimate websites have at least 2 ' +
@@ -214,7 +214,7 @@ Rule.find({}).removeAsync()
     },{
       name: 'Web of Trust (WOT)',
       code: 'WOT',
-      weight: 0.611,
+      weight: 0.0847,
       description: 'Web of Trust (WOT) is a website reputation and review service that helps people make informed ' +
       'decisions about whether to trust a website or not. WOT is based on a unique crowdsourcing approach that collects ' +
       'ratings and reviews from a global community of millions of users who rate and comment on websites based on ' +
