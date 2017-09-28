@@ -28,6 +28,8 @@ Rule.find({}).removeAsync()
       'The results showed that if the length of the URL is greater than or equal 54 characters then the URL classified ' +
       'as phishing. By reviewing our dataset we were able to find 1220 URLs lengths equals to 54 or more which constitute ' +
       '48.8% of the total dataset size.',
+      suspicious: 54,
+      phishing: 75,
       active: true
     }, {
       name: 'Using URL Shortening Services “TinyURL”',
@@ -65,6 +67,8 @@ Rule.find({}).removeAsync()
       'If the number of dots is greater than one, then the URL is classified as “Suspicious” since it has one sub domain.' +
       'However, if the dots are greater than two, it is classified as “Phishing” since it will have multiple sub domains.' +
       'Otherwise, if the URL has no sub domains, we will assign “Legitimate” to the feature. ',
+      suspicious: 1,
+      phishing: 2,
       active: true
     },{
       name: 'HTTPS (Hyper Text Transfer Protocol with Secure Sockets Layer) ',
@@ -77,6 +81,7 @@ Rule.find({}).removeAsync()
       'Certificate Authorities that are consistently listed among the top trustworthy names include: ' +
       '“GeoTrust, GoDaddy, Network Solutions, Thawte, Comodo, Doster and VeriSign”. ' +
       'Furthermore, by testing out our datasets, we find that the minimum age of a reputable certificate is one year.',
+      phishing: 181,
       active: true
     },{
       name: 'Domain Registration Length',
@@ -85,6 +90,7 @@ Rule.find({}).removeAsync()
       description: 'Based on the fact that a phishing website lives for a short period of time, we believe ' +
       'that trustworthy domains are regularly paid for several years in advance. In our dataset, ' +
       'we find that the longest fraudulent domains have been used for one year only.',
+      phishing: 365,
       active: true
     },{
       name: 'Request URL',
@@ -93,23 +99,29 @@ Rule.find({}).removeAsync()
       description: 'Request URL examines whether the external objects contained within a webpage such as images, videos' +
       'and sounds are loaded from another domain. In legitimate webpages, the webpage address and most of objects' +
       'embedded within the webpage are sharing the same domain',
+      suspicious: 22,
+      phishing: 61,
       active: true
     },{
       name: 'URL of Anchor',
       code: 'URLA',
       weight: 0.047,
-      description: 'Given that our investigation covers all angles likely to be used in the webpage source code, ' +
-      'we find that it is common for legitimate websites (Script) tags to create a client side script and ' +
-      '(Link) tags to retrieve other web resources. ' +
-      'It is expected that these tags are linked to the same domain of the webpage.',
+      description: 'An anchor is an element defined by the (a) tag. This feature is treated exactly as “Request URL”. ' +
+      'However, for this feature we examine If the (a) tags and the website have different domain names. ' +
+      'This is similar to request URL feature.',
+      suspicious: 31,
+      phishing: 67,
       active: true
     },{
       name: 'Links in (Script) and (Link) tags',
       code: 'LISALT',
       weight: 0.123,
-      description: 'The dash symbol is rarely used in legitimate URLs. Phishers tend to add prefixes or suffixes ' +
-      'separated by (-) to the domain name so that users feel that they are dealing with a legitimate webpage. ' +
-      'For example http://www.Confirme-paypal.com/',
+      description: 'Given that our investigation covers all angles likely to be used in the webpage source code, ' +
+      'we find that it is common for legitimate websites (Script) tags to create a client side script and ' +
+      '(Link) tags to retrieve other web resources. ' +
+      'It is expected that these tags are linked to the same domain of the webpage.',
+      suspicious: 22,
+      phishing: 61,
       active: true
     },{
       name: 'Server Form Handler (SFH)',
@@ -143,6 +155,7 @@ Rule.find({}).removeAsync()
       description: 'This feature can be extracted from WHOIS database (Whois 2005). Most phishing websites live ' +
       'for a short period of time. By reviewing our dataset, we find that the minimum age ' +
       'of the legitimate domain is 6 months.',
+      phishing: 180,
       active: true
     },{
       name: 'Website Traffic - Alexa Ranking',
@@ -155,6 +168,8 @@ Rule.find({}).removeAsync()
       'legitimate websites ranked among the top 200,000. ' +
       'Furthermore, if the domain has no traffic or is not recognized by the Alexa database, ' +
       'it is classified as “Phishing”. Otherwise, it is classified as “Suspicious”.',
+      suspicious: 200000,
+      phishing: -2,
       active: true
     },{
       name: 'PageRank Mozescape',
@@ -167,6 +182,7 @@ Rule.find({}).removeAsync()
       'Similar to the way that Google’s original PageRank is calculated, we base MozRank on a ' +
       'logarithmic scale between 0 and 10. Thus, it\'s much easier to improve from a MozRank of 3 to 4 ' +
       'than it is to improve from 8 to 9. The rule is if MozRank > 0.2 the page is legitimate otherwise it is phishing.',
+      phishing: 0.2,
       active: true
     },{
       name: 'Page Authority Mozescape',
@@ -179,6 +195,8 @@ Rule.find({}).removeAsync()
       'it uses a machine learning model to identify the algorithm that best correlates with rankings across ' +
       'the thousands of SERPs that we predict against, then produces Page Authority scores ' +
       'using that specific calculation. The rule is if PA > 3 the page is legitimate otherwise it is phishing',
+      suspicious: 5,
+      phishing: 2,
       active: true
     },{
       name: 'Domain Authority',
@@ -190,6 +208,8 @@ Rule.find({}).removeAsync()
       'linking root domains, number of total links, MozRank, MozTrust, etc. — into a single DA score. ' +
       'This score can then be used when comparing websites or tracking the "ranking strength" of a website over time. ' +
       'The rule is if PA > 15 the page is legitimate otherwise it is phishing',
+      suspicious: 17,
+      phishing: 12,
       active: true
     },{
       name: 'Number of Links Pointing to Page',
@@ -200,6 +220,8 @@ Rule.find({}).removeAsync()
       'phishing dataset items have no links pointing to them. On the other hand, legitimate websites have at least 2 ' +
       'external links pointing to them. The rule is if NLPP == 0 than phishing else if NLPP between 0 and 2 ' +
       'than suspicious else if NLPP > 2 than legitimate',
+      suspicious: 2,
+      phishing: 0,
       active: true
     },{
       name: 'Statistical-Reports Based Feature',
@@ -224,6 +246,8 @@ Rule.find({}).removeAsync()
       'WOT is based on a patented system where user behavior is systematically analyzed and monitored to ensure ' +
       'that the ratings are reliable, accurate and constantly updated. In addition, the ratings are validated with ' +
       'trusted third party information, such as blacklists of phishing sites.',
+      suspicious: 60,
+      phishing: 40,
       active: true
     });
   });
