@@ -27,6 +27,14 @@ var RuleSchema = new mongoose.Schema({
     max: 1,
     required : true
   },
+  suspicious:{
+    type: Number,
+    min: 1
+  },
+  phishing:{
+    type: Number,
+    min: -2
+  },
   active: {
     type:Boolean,
     default: true,
