@@ -1,5 +1,6 @@
 'use strict';
 import config from '../../config/environment';
+import Rule from '../rule/rule.model';
 import _ from 'lodash';
 const MY_WOT = require('./scan.config').MY_WOT;
 const MOZCAPE = require('./scan.config').MOZCAPE;
@@ -8,6 +9,7 @@ const TOP_PHISHING_IP_ADDRESSES = require('./scan.config').TOP_PHISHING_IP_ADDRE
 const TOP_PHISHING_KEYWORDS = require('./scan.config').TOP_PHISHING_KEYWORDS;
 const WHITELISTED_DOMAINS = require('./scan.config').WHITELISTED_DOMAINS;
 const PHISHING_CLASS = require('./scan.config').PHISHING_CLASS;
+const RULE_CODES = require('./scan.config').RULE_CODES;
 
 const async = require('async');
 const parseDomain = require("parse-domain");
@@ -158,9 +160,259 @@ function calculatePercentage(total, amount){
 }
 
 
-export function generatePhishingFeatureSet(scanStatistics){
+export function generatePhishingFeatureSet(scanStatistics, cb){
+  Rule.findAsync()
+    .then(function(rules){
+      let urlScore = 0;
+      let totalRulesScore = 0;
+      for(var i = 0; i <rules.length; i++){
+        totalRulesScore = totalRulesScore + rules[i].weight;
+          switch (rules[i].code){
+            case RULE_CODES.ageOfDomain:
+            case RULE_CODES.domainRegistrationLength:
+              if(scanStatistics[rules[i].code]){
+                if(scanStatistics[rules[i].code].days >=  rules[i].phishing){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.legitimate;
+                }
+                else{
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+              }
+              break;
+            case RULE_CODES.hasPrefixOrSufix:
+            case RULE_CODES.iframe:
+            case RULE_CODES.keywordDomainReport:
+            case RULE_CODES.tinyURL:
+            case RULE_CODES.atSymbol:
+            case RULE_CODES.isIPAddress:
+              if(scanStatistics[rules[i].code]){
+                if(scanStatistics[rules[i].code].value ===  PHISHING_CLASS.phishing){
+                  urlScore = urlScore + rules[i].weight;
+                }
+              }
+              break;
+            case RULE_CODES.sfh:
+              if(scanStatistics[rules[i].code]){
+                if(scanStatistics[rules[i].code].value ===  PHISHING_CLASS.phishing){
+                  urlScore = urlScore + rules[i].weight;
+                }
+                else if(scanStatistics[rules[i].code].value ===  PHISHING_CLASS.suspicious){
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+              }
+              break;
+            case RULE_CODES.domainAuthority:
+            case RULE_CODES.pageAuthority:
+            case RULE_CODES.myWOT:
+              if(scanStatistics[rules[i].code]){
+                if(scanStatistics[rules[i].code].count < rules[i].phishing){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+                else if (scanStatistics[rules[i].code].count >= rules[i].phishing && scanStatistics[rules[i].code].count < rules[i].suspicious){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+                else{
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.legitimate;
+                }
+              }
+              break;
+          /*  case RULE_CODES.domainRegistrationLength:
+              if(scanStatistics.domainRegistrationLength && scanStatistics.domainRegistrationLength.days){
+                if(scanStatistics.domainRegistrationLength.days >=  rules[i].phishing){
+                  scanStatistics.domainRegistrationLength.value = PHISHING_CLASS.legitimate;
+                }
+                else{
+                  scanStatistics.domainRegistrationLength.value = PHISHING_CLASS.phishing;
+                  total = total + rules[i].weight;
+                }
+              }
+              break;*/
+            case RULE_CODES.ssl:
+              if(scanStatistics.ssl){
+                if(scanStatistics.ssl.value === PHISHING_CLASS.phishing){
+                  urlScore = urlScore + rules[i].weight;
+                }
+                else if (scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
+                && scanStatistics.ssl.completeCertChain){
+                  scanStatistics.ssl.value = PHISHING_CLASS.legitimate;
+                }
+                else if(!scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1){
+                  scanStatistics.ssl.value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight /2);
+                }
+                else{
+                  scanStatistics.ssl.value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + (rules[i].weight);
+                }
+              }
+              break;
+           /* case RULE_CODES.IFR:
+              if(scanStatistics.iframe){
+                if(scanStatistics.iframe.value ===  PHISHING_CLASS.phishing){
+                  total = total + rules[i].weight;
+                }
+              }
+              break;*/
+            case RULE_CODES.requestUrls:
+            case RULE_CODES.linksInTags:
+            case RULE_CODES.urlOfAnchors:
+              if(scanStatistics[rules[i].code]){
+                if(scanStatistics[rules[i].code].percentage < rules[i].suspicious){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.legitimate;
+                }
+                else if (scanStatistics[rules[i].code].percentage >= rules[i].suspicious && scanStatistics[rules[i].code].percentage <= rules[i].phishing){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+                else{
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+              }
+              break;
+            case RULE_CODES.urlLenght:
+              if(scanStatistics.urlLenght){
+                if(scanStatistics.urlLenght.count < rules[i].suspicious){
+                  scanStatistics.urlLenght.value = PHISHING_CLASS.legitimate;
+                }
+                else if (scanStatistics.urlLenght.count >= rules[i].suspicious && scanStatistics.urlLenght.count <= rules[i].phishing){
+                  scanStatistics.urlLenght.value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+                else{
+                  scanStatistics.urlLenght.value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+              }
+              break;
+            case RULE_CODES.subdomains:
+              if(scanStatistics.subdomains){
+                if(scanStatistics.subdomains.count < rules[i].suspicious){
+                  scanStatistics.subdomains.value = PHISHING_CLASS.legitimate;
+                }
+                else if (scanStatistics.subdomains.count === rules[i].suspicious){
+                  scanStatistics.subdomains.value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+                else{
+                  scanStatistics.subdomains.value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+              }
+              break;
+            case RULE_CODES.externalLinks:
+              if(scanStatistics.externalLinks){
+                if(scanStatistics.externalLinks.count === rules[i].phishing){
+                  scanStatistics.externalLinks.value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+                else if (scanStatistics.externalLinks.count > rules[i].phishing && scanStatistics.externalLinks.count <= rules[i].suspicious){
+                  scanStatistics.externalLinks.value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+                else{
+                  scanStatistics.externalLinks.value = PHISHING_CLASS.legitimate;
+                }
+              }
+              break;
+            case RULE_CODES.websiteTrafficAlexa:
+              if(scanStatistics.websiteTrafficAlexa){
+                if(scanStatistics.websiteTrafficAlexa.rank === rules[i].phishing){
+                  scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+                else if (scanStatistics.websiteTrafficAlexa.rank > rules[i].suspicious){
+                  scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+                else{
+                  scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.legitimate;
+                }
+              }
+              break;
+           /* case RULE_CODES.PA:
+              if(scanStatistics.pageAuthority && scanStatistics.pageAuthority.count){
+                if(scanStatistics.pageAuthority.count <= rules[i].phishing){
+                  scanStatistics.pageAuthority.value = PHISHING_CLASS.phishing;
+                  total = total + rules[i].weight;
+                }
+                else if (scanStatistics.pageAuthority.count > rules[i].phishing && scanStatistics.pageAuthority.count <= rules[i].suspicious){
+                  scanStatistics.pageAuthority.value = PHISHING_CLASS.suspicious;
+                  total = total + (rules[i].weight / 2);
+                }
+                else{
+                  scanStatistics.pageAuthority.value = PHISHING_CLASS.legitimate;
+                }
+              }
+              break;*/
 
+            case RULE_CODES.mozRankURL:
+              if(scanStatistics[rules[i].code]){
+                if(scanStatistics[rules[i].code].count <  rules[i].phishing){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+                else{
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.legitimate;
+                }
+              }
+              break;
+            case RULE_CODES.inputFields:
+              if(scanStatistics.ssl && scanStatistics.inputFields){
+                if(scanStatistics.ssl &&  scanStatistics.ssl.value === PHISHING_CLASS.phishing){
 
+                  if(scanStatistics.inputFields.numOfPasswordFields > 0){
+                    scanStatistics.inputFields.value = PHISHING_CLASS.phishing;
+                    urlScore = urlScore + rules[i].weight;
+                  }
+                  if(scanStatistics.inputFields.numOfTextFields > 0 && scanStatistics.inputFields.numOfPasswordFields === 0){
+                    scanStatistics.inputFields.value = PHISHING_CLASS.suspicious;
+                    urlScore = urlScore + (rules[i].weight/2);
+                  }
+                  else{
+                    scanStatistics.inputFields.value = PHISHING_CLASS.legitimate;
+                  }
+
+                }
+                else if (scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
+                  && scanStatistics.ssl.completeCertChain){
+                  scanStatistics.inputFields.value = PHISHING_CLASS.legitimate;
+                }
+                else if(!scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1){
+                  if(scanStatistics.inputFields.numOfTextFields > 0 || scanStatistics.inputFields.numOfPasswordFields > 0) {
+                    scanStatistics.inputFields.value = PHISHING_CLASS.suspicious;
+                    urlScore = urlScore + (rules[i].weight /2);
+                  }
+
+                }
+                else{
+                  if(scanStatistics.inputFields.numOfPasswordFields > 0){
+                    scanStatistics.inputFields.value = PHISHING_CLASS.phishing;
+                    urlScore = urlScore + rules[i].weight;
+                  }
+                  if(scanStatistics.inputFields.numOfTextFields > 0 && scanStatistics.inputFields.numOfPasswordFields === 0){
+                    scanStatistics.inputFields.value = PHISHING_CLASS.suspicious;
+                    urlScore = urlScore + (rules[i].weight/2);
+                  }
+                  else{
+                    scanStatistics.inputFields.value = PHISHING_CLASS.legitimate;
+                  }
+                }
+              }
+              break;
+
+          }
+      }
+      scanStatistics.urlScore = urlScore;
+      scanStatistics.totalRulesScore = totalRulesScore;
+      scanStatistics.finalScore = calculatePercentage(totalRulesScore, urlScore);
+      cb(null,rules);
+    },function(err){
+      cb(err, null);
+    })
 }
 
 
@@ -297,7 +549,8 @@ function extractValuablePhishingAttributesFromApiResults(results){
 
     if(results){
 
-      scanModel.statistics = {scanDate: moment()};
+      scanModel.scanDate = moment();
+      scanModel.statistics = {};
       if(results.scrap_page){
         scanModel.crawlerResults = {};
         scanModel.crawlerResults.urlOfAnchorsStats = urlOfAnchorStatistics(results.scrap_page.hrefArray, results.parse_url);
@@ -356,7 +609,7 @@ function extractValuablePhishingAttributesFromApiResults(results){
         scanModel.statistics.urlLenght.count = scanModel.parsedUrl.urlLenght;
 
         if(results.parse_url.href) {
-          scanModel.statistics.url = results.parse_url.href;
+          scanModel.url = results.parse_url.href;
         }
 
         scanModel.urlStatisitcs = {
@@ -571,11 +824,27 @@ function extractValuablePhishingAttributesFromApiResults(results){
             scanModel.mozscape[propName] = mozscape[prop];
           }
         }
-        scanModel.statistics.mozscape = {
+       /* scanModel.statistics.mozscape = {
           mozRankURL: scanModel.mozscape.mozRankURLNormalized,
           pageAuthority: scanModel.mozscape.pageAuthority,
           domainAuthority: scanModel.mozscape.domainAuthority,
           externalLinks: scanModel.mozscape.externalEquityLinks
+        }*/
+
+        scanModel.statistics.mozRankURL = {
+          count: scanModel.mozscape.mozRankURLNormalized
+        };
+
+        scanModel.statistics.pageAuthority = {
+          count: scanModel.mozscape.pageAuthority
+        };
+
+        scanModel.statistics.domainAuthority = {
+          count: scanModel.mozscape.domainAuthority
+        };
+
+        scanModel.statistics.externalLinks = {
+          count: scanModel.mozscape.externalEquityLinks
         }
       }
       if(results.my_wot_reputation && results.parse_url){
@@ -585,13 +854,13 @@ function extractValuablePhishingAttributesFromApiResults(results){
           isBlacklisted: false
         };
         scanModel.statistics.isBlacklisted = false;
-        scanModel.statistics.myWOT = {reputation: MY_WOT.REPUTATION.UNKNOWN.VALUE};
+        scanModel.statistics.myWOT = {count: MY_WOT.REPUTATION.UNKNOWN.VALUE};
 
         if (results.my_wot_reputation[hostName]){
           if(results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS]) {
             scanModel.myWOT.trustworthiness = results.my_wot_reputation[hostName][MY_WOT.TRUSTWORTHINESS];
             scanModel.myWOT.hasWOTStatistics = true;
-            scanModel.statistics.myWOT.reputation = scanModel.myWOT.trustworthiness[0];
+            scanModel.statistics.myWOT.count = scanModel.myWOT.trustworthiness[0];
            }
           if (results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY]) {
             scanModel.myWOT.childSafety = results.my_wot_reputation[hostName][MY_WOT.CHILD_SAFETY];
