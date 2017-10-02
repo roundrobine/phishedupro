@@ -11,7 +11,7 @@ Rule.find({}).removeAsync()
   .then(() => {
     Rule.create({
       name: 'Using the IP Address',
-      code: 'UIPA',
+      code: 'isIPAddress',
       weight: 0.006,
       description: 'If an IP address is used as an alternative of the domain name in the URL, ' +
       'such as “http://125.98.3.123/fake.html”, users can be sure that someone is trying to steal their ' +
@@ -20,7 +20,7 @@ Rule.find({}).removeAsync()
       active: true
     }, {
       name: 'Long URL to Hide the Suspicious Part',
-      code: 'LUHSP',
+      code: 'urlLenght',
       weight: 0.003,
       description: 'Phishers can use long URL to hide the doubtful part in the address bar. For example: ' +
       'http://federmacedoadv.com.br/3f/aze/ab51e2e319e51502f416dbe46b773a5e/?cmd=_home&amp;dispatch=11004d58f5b74f8dc1e7c2e8dd4105e811004d58f5b74f8dc1e7c2e8dd4105e8@phishing.website.html' +
@@ -33,7 +33,7 @@ Rule.find({}).removeAsync()
       active: true
     }, {
       name: 'Using URL Shortening Services “TinyURL”',
-      code: 'TINYURL',
+      code: 'tinyURL',
       weight: 0.003,
       description: 'URL shortening is a method on the “World Wide Web” in which a URL may be made considerably smaller' +
       'in length and still lead to the required webpage. This is accomplished by means of an “HTTP Redirect” on a domain' +
@@ -42,14 +42,14 @@ Rule.find({}).removeAsync()
       active: true
     }, {
       name: 'URL’s having “@” Symbol',
-      code: 'UHAS',
+      code: 'atSymbol',
       weight: 0.002,
       description: 'Using “@” symbol in the URL leads the browser to ignore everything preceding the “@” symbol ' +
       'and the real address often follows the “@” symbol. ',
       active: true
     }, {
       name: 'Adding Prefix or Suffix Separated by (-) to the Domain',
-      code: 'APSTD',
+      code: 'hasPrefixOrSufix',
       weight: 0.123,
       description: 'The dash symbol is rarely used in legitimate URLs. Phishers tend to add prefixes or suffixes ' +
       'separated by (-) to the domain name so that users feel that they are dealing with a legitimate webpage. ' +
@@ -57,7 +57,7 @@ Rule.find({}).removeAsync()
       active: true
     }, {
       name: 'Sub Domain and Multi Sub Domains',
-      code: 'SDMSD',
+      code: 'subdomains',
       weight: 0.109,
       description: 'Let us assume we have the following link: http://www.hud.ac.uk/students/. A domain name might include ' +
       'the country-code top-level domains (ccTLD), which in our example is “uk”. The “ac” part is shorthand for “academic”,' +
@@ -72,7 +72,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'HTTPS (Hyper Text Transfer Protocol with Secure Sockets Layer) ',
-      code: 'HTTPS',
+      code: 'ssl',
       weight: 0.499,
       description: 'The existence of HTTPS is very important in giving the impression of website legitimacy, ' +
       'but this is clearly not enough. The authors in (Mohammad, Thabtah and McCluskey 2012), ' +
@@ -85,7 +85,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Domain Registration Length',
-      code: 'DRL',
+      code: 'domainRegistrationLength',
       weight: 0.036,
       description: 'Based on the fact that a phishing website lives for a short period of time, we believe ' +
       'that trustworthy domains are regularly paid for several years in advance. In our dataset, ' +
@@ -94,7 +94,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Request URL',
-      code: 'RURL',
+      code: 'requestUrls',
       weight: 0.046,
       description: 'Request URL examines whether the external objects contained within a webpage such as images, videos' +
       'and sounds are loaded from another domain. In legitimate webpages, the webpage address and most of objects' +
@@ -104,8 +104,8 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'URL of Anchor',
-      code: 'URLA',
-      weight: 0.047,
+      code: 'urlOfAnchors',
+      weight: 0.477,
       description: 'An anchor is an element defined by the (a) tag. This feature is treated exactly as “Request URL”. ' +
       'However, for this feature we examine If the (a) tags and the website have different domain names. ' +
       'This is similar to request URL feature.',
@@ -114,18 +114,18 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Links in (Script) and (Link) tags',
-      code: 'LISALT',
-      weight: 0.123,
+      code: 'linksInTags',
+      weight: 0.047,
       description: 'Given that our investigation covers all angles likely to be used in the webpage source code, ' +
       'we find that it is common for legitimate websites (Script) tags to create a client side script and ' +
       '(Link) tags to retrieve other web resources. ' +
       'It is expected that these tags are linked to the same domain of the webpage.',
-      suspicious: 22,
-      phishing: 61,
+      suspicious: 17,
+      phishing: 81,
       active: true
     },{
       name: 'Server Form Handler (SFH)',
-      code: 'SFH',
+      code: 'sfh',
       weight: 0.037,
       description: 'SFHs that contain an empty string or “about:blank” are considered doubtful because an action should ' +
       'be taken upon the submitted information. In addition, if the domain name in SFHs is different from the domain name' +
@@ -134,7 +134,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'IFrame Redirection',
-      code: 'IFR',
+      code: 'iframe',
       weight: 0.0001,
       description: 'IFrame is an HTML tag used to display an additional webpage into one that is currently shown. ' +
       'Phishers can make use of the “iframe” tag and make it invisible i.e. without frame borders. In this regard, ' +
@@ -142,7 +142,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Using Input Fields (Password, Text, Email, Tel)',
-      code: 'UIF',
+      code: 'inputFields',
       weight: 0.0611,
       description: 'Phishers usually lure their victims to disclose their personal information like: emails, passwords,' +
       'credit card numbers, and phone numbers so they can take advantage of it. We need to check if the' +
@@ -150,7 +150,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Age of Domain',
-      code: 'AOD',
+      code: 'ageOfDomain',
       weight: 0.01,
       description: 'This feature can be extracted from WHOIS database (Whois 2005). Most phishing websites live ' +
       'for a short period of time. By reviewing our dataset, we find that the minimum age ' +
@@ -159,7 +159,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Website Traffic - Alexa Ranking',
-      code: 'WTAR',
+      code: 'websiteTrafficAlexa',
       weight: 0.1145,
       description: 'This feature measures the popularity of the website by determining the number of visitors ' +
       'and the number of pages they visit. However, since phishing websites live for a short period of time, ' +
@@ -173,7 +173,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'PageRank Mozescape',
-      code: 'PR',
+      code: 'mozRankURL',
       weight: 0.008,
       description: 'MozRank quantifies link popularity and is Moz’s version of Google’s classic PageRank algorithm. ' +
       'Pages earn MozRank based on the other pages on the web that link to them and the MozRank of those linking pages. ' +
@@ -186,7 +186,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Page Authority Mozescape',
-      code: 'PA',
+      code: 'pageAuthority',
       weight: 0.0847,
       description: 'Page Authority (PA) is a score developed by Moz that predicts how well a specific page will rank on' +
       'search engine result pages (SERP). Page Authority scores range from one to 100, with higher scores corresponding ' +
@@ -200,7 +200,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Domain Authority',
-      code: 'DA',
+      code: 'domainAuthority',
       weight: 0.0847,
       description: 'Domain Authority (DA) is a search engine ranking score developed by Moz that predicts how well' +
       'a website will rank on search engine result pages (SERPs). A Domain Authority score ranges from one to 100, ' +
@@ -213,7 +213,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Number of Links Pointing to Page',
-      code: 'NLPP',
+      code: 'externalLinks',
       weight: 0.004,
       description: 'The number of links pointing to the webpage indicates its legitimacy level, even if some links are ' +
       'of the same domain (Dean, 2014). In our datasets and due to its short life span, we find that 98% of ' +
@@ -225,7 +225,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Statistical-Reports Based Feature',
-      code: 'SRBF',
+      code: 'keywordDomainReport',
       weight: 0.004,
       description: 'Websites such as PhishTank, formulate numerous statistical reports on ' +
       'phishing websites at every given period of time; some are monthly and others are quarterly. ' +
@@ -235,7 +235,7 @@ Rule.find({}).removeAsync()
       active: true
     },{
       name: 'Web of Trust (WOT)',
-      code: 'WOT',
+      code: 'myWOT',
       weight: 0.0847,
       description: 'Web of Trust (WOT) is a website reputation and review service that helps people make informed ' +
       'decisions about whether to trust a website or not. WOT is based on a unique crowdsourcing approach that collects ' +

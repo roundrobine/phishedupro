@@ -18,7 +18,7 @@ var RuleSchema = new mongoose.Schema({
     type:String,
     required : true,
     trim: true,
-    maxlength: 9,
+    maxlength: 50,
     unique: true
   },
   weight:{
