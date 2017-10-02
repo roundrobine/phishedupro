@@ -295,33 +295,6 @@ const PHISHING_CLASS = {
   legitimate: 1
 }
 
-
-/*const RULE_CODES = {
-  UIPA: "UIPA",
-  LUHSP: "LUHSP",
-  TINYURL: "TINYURL",
-  UHAS: "UHAS",
-  APSTD: "APSTD",
-  SDMSD: "SDMSD",
-  HTTPS: "HTTPS",
-  DRL: "DRL",
-  RURL: "RURL",
-  URLA: "URLA",
-  LISALT: "LISALT",
-  SFH: "SFH",
-  IFR: "IFR",
-  UIF: "UIF",
-  AOD: "AOD",
-  WTAR: "WTAR",
-  PR: "PR",
-  PA: "PA",
-  DA: "DA",
-  NLPP: "NLPP",
-  SRBF: "SRBF",
-  WOT: "WOT"
-}*/
-
-
 const RULE_CODES = {
   urlOfAnchors: "urlOfAnchors",
   requestUrls: "requestUrls",

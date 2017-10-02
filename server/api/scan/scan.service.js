@@ -219,17 +219,6 @@ export function generatePhishingFeatureSet(scanStatistics, cb){
                 }
               }
               break;
-          /*  case RULE_CODES.domainRegistrationLength:
-              if(scanStatistics.domainRegistrationLength && scanStatistics.domainRegistrationLength.days){
-                if(scanStatistics.domainRegistrationLength.days >=  rules[i].phishing){
-                  scanStatistics.domainRegistrationLength.value = PHISHING_CLASS.legitimate;
-                }
-                else{
-                  scanStatistics.domainRegistrationLength.value = PHISHING_CLASS.phishing;
-                  total = total + rules[i].weight;
-                }
-              }
-              break;*/
             case RULE_CODES.ssl:
               if(scanStatistics.ssl){
                 if(scanStatistics.ssl.value === PHISHING_CLASS.phishing){
@@ -249,13 +238,6 @@ export function generatePhishingFeatureSet(scanStatistics, cb){
                 }
               }
               break;
-           /* case RULE_CODES.IFR:
-              if(scanStatistics.iframe){
-                if(scanStatistics.iframe.value ===  PHISHING_CLASS.phishing){
-                  total = total + rules[i].weight;
-                }
-              }
-              break;*/
             case RULE_CODES.requestUrls:
             case RULE_CODES.linksInTags:
             case RULE_CODES.urlOfAnchors:
@@ -333,22 +315,6 @@ export function generatePhishingFeatureSet(scanStatistics, cb){
                 }
               }
               break;
-           /* case RULE_CODES.PA:
-              if(scanStatistics.pageAuthority && scanStatistics.pageAuthority.count){
-                if(scanStatistics.pageAuthority.count <= rules[i].phishing){
-                  scanStatistics.pageAuthority.value = PHISHING_CLASS.phishing;
-                  total = total + rules[i].weight;
-                }
-                else if (scanStatistics.pageAuthority.count > rules[i].phishing && scanStatistics.pageAuthority.count <= rules[i].suspicious){
-                  scanStatistics.pageAuthority.value = PHISHING_CLASS.suspicious;
-                  total = total + (rules[i].weight / 2);
-                }
-                else{
-                  scanStatistics.pageAuthority.value = PHISHING_CLASS.legitimate;
-                }
-              }
-              break;*/
-
             case RULE_CODES.mozRankURL:
               if(scanStatistics[rules[i].code]){
                 if(scanStatistics[rules[i].code].count <  rules[i].phishing){
