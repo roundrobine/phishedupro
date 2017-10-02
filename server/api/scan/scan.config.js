@@ -295,6 +295,58 @@ const PHISHING_CLASS = {
   legitimate: 1
 }
 
+
+/*const RULE_CODES = {
+  UIPA: "UIPA",
+  LUHSP: "LUHSP",
+  TINYURL: "TINYURL",
+  UHAS: "UHAS",
+  APSTD: "APSTD",
+  SDMSD: "SDMSD",
+  HTTPS: "HTTPS",
+  DRL: "DRL",
+  RURL: "RURL",
+  URLA: "URLA",
+  LISALT: "LISALT",
+  SFH: "SFH",
+  IFR: "IFR",
+  UIF: "UIF",
+  AOD: "AOD",
+  WTAR: "WTAR",
+  PR: "PR",
+  PA: "PA",
+  DA: "DA",
+  NLPP: "NLPP",
+  SRBF: "SRBF",
+  WOT: "WOT"
+}*/
+
+
+const RULE_CODES = {
+  urlOfAnchors: "urlOfAnchors",
+  requestUrls: "requestUrls",
+  linksInTags: "linksInTags",
+  sfh: "sfh",
+  iframe: "iframe",
+  inputFields: "inputFields",
+  tinyURL: "tinyURL",
+  atSymbol: "atSymbol",
+  hasPrefixOrSufix: "hasPrefixOrSufix",
+  subdomains: "subdomains",
+  isIPAddress: "isIPAddress",
+  urlLenght: "urlLenght",
+  keywordDomainReport: "keywordDomainReport",
+  websiteTrafficAlexa: "websiteTrafficAlexa",
+  ageOfDomain: "ageOfDomain",
+  domainRegistrationLength: "domainRegistrationLength",
+  ssl: "ssl",
+  mozRankURL: "mozRankURL",
+  pageAuthority: "pageAuthority",
+  domainAuthority: "domainAuthority",
+  externalLinks: "externalLinks",
+  myWOT: "myWOT"
+}
+
 module.exports = {
   MY_WOT: MY_WOT,
   MOZCAPE: MOZCAPE,
@@ -302,5 +354,6 @@ module.exports = {
   TOP_PHISHING_IP_ADDRESSES: TOP_PHISHING_IP_ADDRESSES,
   TOP_PHISHING_KEYWORDS: TOP_PHISHING_KEYWORDS,
   WHITELISTED_DOMAINS: WHITELISTED_DOMAINS,
-  PHISHING_CLASS: PHISHING_CLASS
+  PHISHING_CLASS: PHISHING_CLASS,
+  RULE_CODES: RULE_CODES
 };
