@@ -47,7 +47,9 @@ var all = {
       password: 'Tphalo8c',
       username: 'roundrobine'
     },
-    
+    google_safe_browsing_api:{
+      key: 'AIzaSyBHbjHGGxO5BFPhclkpVlDLwW5-ayCKOgQ'
+    }
   },
 
   api_endpoints:{
@@ -55,7 +57,8 @@ var all = {
     whois_lookup: "https://jsonwhois.com/api/v1/whois",
     ssl_check: 'http://www.ssltools.com/api/scan',
     whois_xml_api: 'https://www.whoisxmlapi.com/whoisserver/WhoisService',
-    mozscape_api: 'http://lsapi.seomoz.com/linkscape/url-metrics'
+    mozscape_api: 'http://lsapi.seomoz.com/linkscape/url-metrics',
+    google_safe_browsing_api: 'https://safebrowsing.googleapis.com/v4/threatMatches:find'
   },
 
   // MongoDB connection options
