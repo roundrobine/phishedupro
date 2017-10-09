@@ -108,12 +108,17 @@ export function show(req, res) {
 
 // Creates a new Scan in the DB
 export function create(req, res) {
+  let startTime = Date.now();
     ScanService.scanURLAndExtractFeatures(req.body.myUrl, function(err, result) {
       if(err) {
         console.log(err, result);
         return res.status(500).send(err);
       }
       ScanService.generatePhishingFeatureSet(result.statistics, function(err, rules){
+        let endTime = Date.now();
+        let responseTime = (Math.round((endTime - startTime) * 100) / 100000 ) ;
+        result.responseTime = responseTime;
+        console.log("Request time: ", responseTime);
         res.status(200).json(result);
       });
 
