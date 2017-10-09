@@ -1020,6 +1020,41 @@ function sslCheck(parsedUrl,cb){
 
 }
 
+
+function googleBlackListLookup(url,cb){
+    let options = {
+      method: 'POST',
+      uri: config.api_endpoints.google_safe_browsing_api,
+      qs: {
+        key: config.secrets.google_safe_browsing_api.key
+      },
+      body: {
+        client:{
+          clientId: "phishedupro",
+          clientVersion: "1.0.0"
+        },
+        threatInfo: {
+          threatTypes: ["MALWARE", "SOCIAL_ENGINEERING"],
+          platformTypes: ["ANY_PLATFORM"],
+          threatEntryTypes: ["URL"],
+          threatEntries: [
+            {url: url}
+          ]
+        }
+      },
+      json: true // Automatically parses the JSON string in the response
+    };
+
+    rp(options)
+      .then(function (res) {
+        cb(null, res)
+      }, function (err) {
+        cb(err, null)
+      });
+
+
+}
+
 export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
@@ -1245,6 +1280,17 @@ export function scanURLAndExtractFeatures(url, cb){
       mozscapeApiCall(results.parse_url.href, function(err, result){
         if (!err) {
           console.log(result);
+          callback(null, result);
+        } else {
+          console.log(err);
+          callback(err, result);
+        }
+      })
+    }],
+    google_safe_browsing_api: ['parse_url', function(results, callback) {
+      googleBlackListLookup(results.parse_url.href, function(err, result){
+        if (!err) {
+          console.log("BlackList: ",result);
           callback(null, result);
         } else {
           console.log(err);
