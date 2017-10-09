@@ -334,7 +334,7 @@ export function generatePhishingFeatureSet(scanStatistics, cb){
                     scanStatistics.inputFields.value = PHISHING_CLASS.phishing;
                     urlScore = urlScore + rules[i].weight;
                   }
-                  if(scanStatistics.inputFields.numOfTextFields > 0 && scanStatistics.inputFields.numOfPasswordFields === 0){
+                  else if(scanStatistics.inputFields.numOfTextFields > 0 && scanStatistics.inputFields.numOfPasswordFields === 0){
                     scanStatistics.inputFields.value = PHISHING_CLASS.suspicious;
                     urlScore = urlScore + (rules[i].weight/2);
                   }
@@ -355,13 +355,13 @@ export function generatePhishingFeatureSet(scanStatistics, cb){
 
                 }
                 else{
-                  if(scanStatistics.inputFields.numOfPasswordFields > 0){
-                    scanStatistics.inputFields.value = PHISHING_CLASS.phishing;
-                    urlScore = urlScore + rules[i].weight;
-                  }
                   if(scanStatistics.inputFields.numOfTextFields > 0 && scanStatistics.inputFields.numOfPasswordFields === 0){
                     scanStatistics.inputFields.value = PHISHING_CLASS.suspicious;
                     urlScore = urlScore + (rules[i].weight/2);
+                  }
+                  else if(scanStatistics.inputFields.numOfPasswordFields > 0){
+                    scanStatistics.inputFields.value = PHISHING_CLASS.phishing;
+                    urlScore = urlScore + rules[i].weight;
                   }
                   else{
                     scanStatistics.inputFields.value = PHISHING_CLASS.legitimate;

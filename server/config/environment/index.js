@@ -46,7 +46,8 @@ var all = {
     whois_xml_api:{
       password: 'Tphalo8c',
       username: 'roundrobine'
-    }
+    },
+    
   },
 
   api_endpoints:{
