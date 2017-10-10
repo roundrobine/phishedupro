@@ -372,10 +372,15 @@ export function generatePhishingFeatureSet(scanStatistics, cb){
 
           }
       }
-      scanStatistics.urlScore = urlScore;
-      scanStatistics.totalRulesScore = totalRulesScore;
+      scanStatistics.urlScore = Math.round(urlScore * 1000) / 1000;
+      scanStatistics.totalRulesScore = Math.round(totalRulesScore * 1000) / 1000;
       scanStatistics.finalScore = calculatePercentage(totalRulesScore, urlScore);
-      cb(null,rules);
+
+      if(scanStatistics.isBlacklisted){
+        scanStatistics.finalScore = 100;
+      }
+
+      cb(null,"Success");
     },function(err){
       cb(err, null);
     })
@@ -516,7 +521,21 @@ function extractValuablePhishingAttributesFromApiResults(results){
     if(results){
 
       scanModel.scanDate = moment();
-      scanModel.statistics = {};
+      scanModel.statistics = {isBlacklisted:false};
+
+      if(results.google_safe_browsing_api){
+        scanModel.googleBlackList = {};
+        if(results.google_safe_browsing_api.matches && results.google_safe_browsing_api.matches.length > 0){
+          scanModel.googleBlackList.treats = [];
+          scanModel.statistics.isBlacklisted = true;
+          results.google_safe_browsing_api.matches.forEach(function (treat) {
+            let newTreat = {};
+            newTreat.type = treat.threatType;
+            newTreat.platofrm = treat.platformType;
+            scanModel.googleBlackList.treats.push(newTreat);
+          })
+        }
+      }
       if(results.scrap_page){
         scanModel.crawlerResults = {};
         scanModel.crawlerResults.urlOfAnchorsStats = urlOfAnchorStatistics(results.scrap_page.hrefArray, results.parse_url);
@@ -819,7 +838,6 @@ function extractValuablePhishingAttributesFromApiResults(results){
           hasWOTStatistics: false,
           isBlacklisted: false
         };
-        scanModel.statistics.isBlacklisted = false;
         scanModel.statistics.myWOT = {count: MY_WOT.REPUTATION.UNKNOWN.VALUE};
 
         if (results.my_wot_reputation[hostName]){
@@ -1084,7 +1102,7 @@ export function scanURLAndExtractFeatures(url, cb){
       console.log('it enters');
       nightmare
         .goto(url)
-        .wait(1090)
+        .wait(1503)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
