@@ -114,13 +114,20 @@ export function create(req, res) {
         console.log(err, result);
         return res.status(500).send(err);
       }
-      ScanService.generatePhishingFeatureSet(result.statistics, function(err, rules){
-        let endTime = Date.now();
-        let responseTime = (Math.round((endTime - startTime) * 100) / 100000 ) ;
-        result.responseTime = responseTime;
-        console.log("Request time: ", responseTime);
-        res.status(200).json(result);
-      });
+      else {
+        if(result === "The website is not currently online!"){
+            return res.status(200).json(result);
+        }
+        else {
+          ScanService.generatePhishingFeatureSet(result.statistics, function (err, rules) {
+            let endTime = Date.now();
+            let responseTime = (Math.round((endTime - startTime) * 100) / 100000 );
+            result.responseTime = responseTime;
+            console.log("Request time: ", responseTime);
+            return res.status(200).json(result);
+          });
+        }
+      }
 
     });
 

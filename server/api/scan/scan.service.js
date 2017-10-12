@@ -1076,7 +1076,25 @@ function googleBlackListLookup(url,cb){
 export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
-    get_final_url: function(callback){
+    ping_website: function(callback) {
+      var options = {
+        method: 'GET',
+        uri: url,
+        resolveWithFullResponse: true    //  <---  <---  <---  <---
+      };
+      let online = {isOnline:true};
+      rp(options)
+        .then(function (response) {
+          online.statusCode = response.statusCode;
+          callback(null, online);
+        })
+        .catch(function (err) {
+          online.isOnline = false;
+          console.log(err);
+          callback(online, null);
+        });
+    },
+    get_final_url: ['ping_website', function(results, callback){
       var nightmareUrl = Nightmare({ show: false });
       nightmareUrl
         .goto(url)
@@ -1096,8 +1114,8 @@ export function scanURLAndExtractFeatures(url, cb){
           callback(error, null);
         });
 
-    },
-    scrap_page: function(callback) {
+    }],
+    scrap_page: ['ping_website', function(results, callback) {
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
@@ -1180,8 +1198,8 @@ export function scanURLAndExtractFeatures(url, cb){
         }, function (error) {
           callback(error, null);
         });
-    },
-    unshort_url: function(callback) {
+    }],
+    unshort_url: ['ping_website', function(results, callback) {
       tall(url)
         .then(function(unshortenedUrl) {
           let urlObject = {};
@@ -1203,13 +1221,14 @@ export function scanURLAndExtractFeatures(url, cb){
 
           console.log('Tall url', unshortenedUrl);
           console.log('Original url', originalUrl);
+
           callback(null, urlObject);
         })
         .catch(function(err) {
           callback(err, null);
         })
       ;
-    },
+    }],
     parse_url: ['unshort_url','get_final_url', function(results, callback) {
       let myUrl = null;
       if(results.get_final_url && results.get_final_url.finalUrl && (validUrl.isHttpUri(results.get_final_url.finalUrl) || validUrl.isHttpsUri(results.get_final_url.finalUrl)))
@@ -1322,11 +1341,16 @@ export function scanURLAndExtractFeatures(url, cb){
         let scanStatistics = extractValuablePhishingAttributesFromApiResults(results);
         return cb(null, scanStatistics);
       } catch (error) {
-        return cb(error, "Error in the function!")
+        return cb(error, "Error in the scanStatistics function!")
       }
     }
     else{
-      return cb(err, "An error has occurred!");
+      if(err && err.isOnline === false){
+        return cb(null, "The website is not currently online!");
+      }
+      else {
+        return cb(err, "An error has occurred!");
+      }
     }
 
   });
