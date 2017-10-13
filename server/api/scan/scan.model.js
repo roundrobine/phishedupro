@@ -1,6 +1,7 @@
 'use strict';
 
 var mongoose = require('bluebird').promisifyAll(require('mongoose'));
+import {Schema} from 'mongoose';
 
 var ScanSchema = new mongoose.Schema({
   scanDate: {
@@ -17,27 +18,27 @@ var ScanSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  isBlacklisted:{
+    type: Boolean,
+    required: true
+  },
+  urlScore:{
+    type: Number,
+    min: [0, 'Can not be less 0'],
+    required: true
+  },
+  totalRulesScore:{
+    type: Number,
+    min: [0, 'Can not be less 0'],
+    required: true
+  },
+  finalScore:{
+    type: Number,
+    min: [0, 'Can not be less 0'],
+    max: [100, 'Can not be more 100'],
+    required: true
+  },
   statistics:{
-    isBlacklisted:{
-      type: Boolean,
-      required: true
-    },
-    urlScore:{
-      type: Number,
-      min: [0, 'Can not be less 0'],
-      required: true
-    },
-    totalRulesScore:{
-      type: Number,
-      min: [0, 'Can not be less 0'],
-      required: true
-    },
-    finalScore:{
-      type: Number,
-      min: [0, 'Can not be less 0'],
-      max: [100, 'Can not be more 100'],
-      required: true
-    },
     urlOfAnchors: {
       percentage: {
         type: Number,
@@ -344,7 +345,7 @@ var ScanSchema = new mongoose.Schema({
       }
     },
     websiteTrafficAlexa: {
-      count: {
+      rank: {
         type: Number,
         min: [-2, 'Can not be less than -2 %'],
         validate: {
@@ -365,7 +366,7 @@ var ScanSchema = new mongoose.Schema({
       }
     },
     ageOfDomain: {
-      count: {
+      days: {
         type: Number,
         min: [-2, 'Can not be less than -2 %'],
         validate: {
@@ -386,7 +387,7 @@ var ScanSchema = new mongoose.Schema({
       }
     },
     domainRegistrationLength: {
-      count: {
+      days: {
         type: Number,
         min: [-2, 'Can not be less than -2 %'],
         validate: {
@@ -436,6 +437,59 @@ var ScanSchema = new mongoose.Schema({
         required: true
       }
     }
+  },
+  googleBlackList: Schema.Types.Mixed,
+  crawlerResults: Schema.Types.Mixed,
+  unshortUrl: Schema.Types.Mixed,
+  parsedUrl: Schema.Types.Mixed,
+  urlStatisitcs: Schema.Types.Mixed,
+  alexa: Schema.Types.Mixed,
+  whoisRecord: {
+    expiresInDays:{
+      type: Number,
+      min: [-2, 'Can not be less than -2'],
+      validate: {
+        validator: Number.isInteger,
+        message: '{VALUE} is not an integer value'
+      },
+    },
+    domainAgeDays:{
+      type: Number,
+      min: [-2, 'Can not be less than -2'],
+      validate: {
+        validator: Number.isInteger,
+        message: '{VALUE} is not an integer value'
+      },
+    },
+    lookupDate:{
+      type: Date,
+      required: true
+    },
+    expiresDate:{
+      type: Date,
+    },
+    updatedDate:{
+      type: Date,
+    },
+    createdDate:{
+      type: Date,
+    }
+  },
+  sslCertificate: Schema.Types.Mixed,
+  mozscape: Schema.Types.Mixed,
+  myWOT: Schema.Types.Mixed,
+  target: {
+    type: Number,
+    min: [-1, 'Can not be less -1'],
+    max: [1, 'Can not be more 1'],
+    validate: {
+      validator: Number.isInteger,
+      message: '{VALUE} is not an integer value'
+    }
+  },
+  active:{
+    type:Boolean,
+    default:true
   }
 });
 
