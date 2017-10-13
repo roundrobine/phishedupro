@@ -10,6 +10,7 @@ const TOP_PHISHING_KEYWORDS = require('./scan.config').TOP_PHISHING_KEYWORDS;
 const WHITELISTED_DOMAINS = require('./scan.config').WHITELISTED_DOMAINS;
 const PHISHING_CLASS = require('./scan.config').PHISHING_CLASS;
 const RULE_CODES = require('./scan.config').RULE_CODES;
+const SCAN_ERROR_MESSAGES = require('./scan.config').SCAN_ERROR_MESSAGES;
 
 const async = require('async');
 const parseDomain = require("parse-domain");
@@ -22,6 +23,7 @@ const rp = require('request-promise');
 const crypto = require('crypto');
 const validUrl = require('valid-url');
 var moment = require('moment');
+var http = require('http');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 const HTTPS = 'https:';
@@ -160,9 +162,60 @@ function calculatePercentage(total, amount){
 }
 
 
-export function generatePhishingFeatureSet(scanStatistics, cb){
+
+function checkUrlExists(url, cb) {
+  var options = {
+    method: 'HEAD',
+    host: urlParser.parse(url).host,
+    port: 80,
+    path: urlParser.parse(url).pathname
+  };
+  let online = {isOnline:true};
+  var req = http.request(options, function (res) {
+    if (('' + res.statusCode).match(/^5\d\d$/)){
+    // Server error, I have no idea what happend in the backend
+    // but server at least returned correctly (in a HTTP protocol
+    // sense) formatted response
+      online.isOnline = false;
+      cb(online, null);
+    }
+    else{
+      cb(null, online);
+    }
+
+  });
+  req.on('error', function (e) {
+    // General error, i.e.
+    //  - ECONNRESET - server closed the socket unexpectedly
+    //  - ECONNREFUSED - server did not listen
+    //  - HPE_INVALID_VERSION
+    //  - HPE_INVALID_STATUS
+    //  - ... (other HPE_* codes) - server returned garbage
+    online.isOnline = false;
+    cb(online, null);
+  });
+
+  req.on('timeout', function () {
+    // Timeout happend. Server received request, but not handled it
+    // (i.e. doesn't send any response or it took to long).
+    // You don't know what happend.
+    // It will emit 'error' message as well (with ECONNRESET code).
+
+    console.log('timeout');
+    online.isOnline = false;
+    cb(online, null);
+    req.abort();
+  });
+
+  req.setTimeout(5000);
+  req.end();
+}
+
+
+export function generatePhishingFeatureSet(scanResults, cb){
   Rule.findAsync()
     .then(function(rules){
+      let scanStatistics = scanResults.statistics;
       let urlScore = 0;
       let totalRulesScore = 0;
       for(var i = 0; i <rules.length; i++){
@@ -372,12 +425,12 @@ export function generatePhishingFeatureSet(scanStatistics, cb){
 
           }
       }
-      scanStatistics.urlScore = Math.round(urlScore * 1000) / 1000;
-      scanStatistics.totalRulesScore = Math.round(totalRulesScore * 1000) / 1000;
-      scanStatistics.finalScore = calculatePercentage(totalRulesScore, urlScore);
+      scanResults.urlScore = Math.round(urlScore * 1000) / 1000;
+      scanResults.totalRulesScore = Math.round(totalRulesScore * 1000) / 1000;
+      scanResults.finalScore = calculatePercentage(totalRulesScore, urlScore);
 
-      if(scanStatistics.isBlacklisted){
-        scanStatistics.finalScore = 100;
+      if(scanResults.isBlacklisted){
+        scanResults.finalScore = 100;
       }
 
       cb(null,"Success");
@@ -521,13 +574,14 @@ function extractValuablePhishingAttributesFromApiResults(results){
     if(results){
 
       scanModel.scanDate = moment();
-      scanModel.statistics = {isBlacklisted:false};
+      scanModel.isBlacklisted = false;
+      scanModel.statistics = {};
 
       if(results.google_safe_browsing_api){
         scanModel.googleBlackList = {};
         if(results.google_safe_browsing_api.matches && results.google_safe_browsing_api.matches.length > 0){
           scanModel.googleBlackList.treats = [];
-          scanModel.statistics.isBlacklisted = true;
+          scanModel.isBlacklisted = true;
           results.google_safe_browsing_api.matches.forEach(function (treat) {
             let newTreat = {};
             newTreat.type = treat.threatType;
@@ -867,7 +921,7 @@ function extractValuablePhishingAttributesFromApiResults(results){
           if(results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS]){
             scanModel.myWOT.hasWOTStatistics = true;
             scanModel.myWOT.isBlacklisted = true;
-            scanModel.statistics.isBlacklisted = true;
+            scanModel.isBlacklisted = true;
             let blacklists = results.my_wot_reputation[hostName][MY_WOT.BLACKLISTS];
             scanModel.myWOT.blacklists = [];
             for (let prop in blacklists) {
@@ -1077,22 +1131,30 @@ export function scanURLAndExtractFeatures(url, cb){
 
   async.auto({
     ping_website: function(callback) {
-      var options = {
+     /* var options = {
         method: 'GET',
         uri: url,
         resolveWithFullResponse: true    //  <---  <---  <---  <---
       };
-      let online = {isOnline:true};
-      rp(options)
+      let online = {isOnline:true};*/
+     /* rp(options)
         .then(function (response) {
           online.statusCode = response.statusCode;
           callback(null, online);
-        })
-        .catch(function (err) {
+        },function (err) {
           online.isOnline = false;
           console.log(err);
           callback(online, null);
-        });
+        });*/
+      checkUrlExists(url, function(err, result){
+        if (!err) {
+          //console.log(result);
+          callback(null, result);
+        } else {
+          //console.log(err);
+          callback(err, result);
+        }
+      })
     },
     get_final_url: ['ping_website', function(results, callback){
       var nightmareUrl = Nightmare({ show: false });
@@ -1341,12 +1403,12 @@ export function scanURLAndExtractFeatures(url, cb){
         let scanStatistics = extractValuablePhishingAttributesFromApiResults(results);
         return cb(null, scanStatistics);
       } catch (error) {
-        return cb(error, "Error in the scanStatistics function!")
+        return cb(error, SCAN_ERROR_MESSAGES.ERROR_IN_SCAN_STATISTICS)
       }
     }
     else{
       if(err && err.isOnline === false){
-        return cb(null, "The website is not currently online!");
+        return cb(null, SCAN_ERROR_MESSAGES.WEBSITE_NOT_ACCESSIBLE);
       }
       else {
         return cb(err, "An error has occurred!");
