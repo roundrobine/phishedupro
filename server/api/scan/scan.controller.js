@@ -119,30 +119,19 @@ export function create(req, res) {
             return res.status(200).json(result);
         }
         else {
-          ScanService.generatePhishingFeatureSet(result.statistics, function (err, rules) {
+          ScanService.generatePhishingFeatureSet(result, function (err, rules) {
             let endTime = Date.now();
             let responseTime = (Math.round((endTime - startTime) * 100) / 100000 );
             result.responseTime = responseTime;
             console.log("Request time: ", responseTime);
-            return res.status(200).json(result);
+            Scan.createAsync(result)
+              .then(responseWithResult(res, 201))
+              .catch(handleError(res));
           });
         }
       }
 
     });
-
-
-   /* var dns = require('dns');
-    var w3 = dns.lookup('internetbanking-credit.umbler.net', function (err, addresses, family) {
-    console.log("The IP is:", addresses);
-      res.status(200).json(myUrl);
-   });*/
-
-
-  /*Scan.createAsync(req.body)
-    .then(responseWithResult(res, 201))
-    .catch(handleError(res));*/
-}
 
 // Updates an existing Scan in the DB
 export function update(req, res) {
