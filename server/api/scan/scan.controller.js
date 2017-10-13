@@ -132,6 +132,8 @@ export function create(req, res) {
       }
 
     });
+  
+}
 
 // Updates an existing Scan in the DB
 export function update(req, res) {
