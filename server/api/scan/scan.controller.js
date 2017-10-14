@@ -109,13 +109,14 @@ export function show(req, res) {
 // Creates a new Scan in the DB
 export function create(req, res) {
   let startTime = Date.now();
-    ScanService.scanURLAndExtractFeatures(req.body.myUrl, function(err, result) {
+    ScanService.scanURLAndExtractFeatures(req.body, function(err, result) {
       if(err) {
         console.log(err, result);
         return res.status(500).send(err);
       }
       else {
-        if(result === "The website is not currently online!"){
+        if(result && result.message === "The website is not currently online!"){
+
             return res.status(200).json(result);
         }
         else {
@@ -132,7 +133,7 @@ export function create(req, res) {
       }
 
     });
-  
+
 }
 
 // Updates an existing Scan in the DB
