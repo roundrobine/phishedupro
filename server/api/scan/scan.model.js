@@ -475,7 +475,19 @@ var ScanSchema = new mongoose.Schema({
       type: Date,
     }
   },
-  sslCertificate: Schema.Types.Mixed,
+  sslCertificate: {
+    validFrom:Date,
+    validTo:Date,
+    issuer: String,
+    expiresIn : Number,
+    certificateDuration : Number,
+    isRevoked : Boolean,
+    completeCertChain : Boolean,
+    certType: String,
+    trustedCA: Boolean,
+    existInSANEntries : Boolean,
+    san_entries: [String]
+  },
   mozscape: Schema.Types.Mixed,
   myWOT: Schema.Types.Mixed,
   target: {
@@ -486,6 +498,10 @@ var ScanSchema = new mongoose.Schema({
       validator: Number.isInteger,
       message: '{VALUE} is not an integer value'
     }
+  },
+  owner: {
+    type: Schema.ObjectId,
+    ref: 'User'
   },
   active:{
     type:Boolean,
