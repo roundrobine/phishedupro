@@ -7,6 +7,11 @@ angular.module('phisheduproApp')
         url: '/',
         templateUrl: 'app/main/main.html',
         controller: 'MainCtrl',
-        controllerAs: 'vm'
+        controllerAs: 'vm',
+        resolve: {
+          currentUser: function(Auth) {
+            return Auth.getCurrentUser().$promise;
+          }
+        }
       });
   });

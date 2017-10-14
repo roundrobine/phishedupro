@@ -5,7 +5,7 @@
 (function() {
   var urlScanFactory = function($resource) {
 
-    return $resource('/api/scan/:id', {
+    return $resource('/scan/:id', {
       id: '@id'
     });
   };

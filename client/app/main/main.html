@@ -9,17 +9,24 @@
 </header>
 
 <div class="container">
-
   <div ng-if="vm.isAuthenticated()">
-    <form class="thing-form">
-      <label>Analize the website to detect phishing</label>
-      <p class="input-group">
-        <input type="text" class="form-control" placeholder="Check website" ng-model="">
-        <span class="input-group-btn">
-        <button type="submit" class="btn btn-primary" ng-click="">Scan Website</button>
-      </span>
-      </p>
-    </form>
+    <div class="row">
+      <div class="col-lg-12">
+        <form class="form-horizontal marginTop15">
+          <div class="form-group">
+            <div class="col-md-9">
+              <input type="text" class="form-control " placeholder="Check website" ng-model="vm.scan.url">
+            </div>
+            <div class="col-md-1">
+              <input type="text" class="form-control " placeholder="Target" ng-model="vm.scan.target">
+            </div>
+            <div class="col-md-2">
+              <button type="button" class="btn btn-primary" ng-click="vm.scanUrl()">Scan</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <div class="row">
