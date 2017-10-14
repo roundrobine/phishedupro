@@ -259,7 +259,7 @@ export function generatePhishingFeatureSet(scanResults, cb){
             case RULE_CODES.pageAuthority:
             case RULE_CODES.myWOT:
               if(scanStatistics[rules[i].code]){
-                if(scanStatistics[rules[i].code].count < rules[i].phishing){
+                if(scanStatistics[rules[i].code].count < rules[i].phishing || scanResults.myWOT.isBlacklisted){
                   scanStatistics[rules[i].code].value = PHISHING_CLASS.phishing;
                   urlScore = urlScore + rules[i].weight;
                 }
@@ -605,8 +605,15 @@ function extractValuablePhishingAttributesFromApiResults(results){
         }
         scanModel.crawlerResults.requestUrlsStats = urlOfAnchorStatistics(results.scrap_page.reqURLArray, results.parse_url);
         scanModel.statistics.requestUrls.percentage = scanModel.crawlerResults.requestUrlsStats.percentage;
+
         scanModel.crawlerResults.linksInTagsStats = urlOfAnchorStatistics(results.scrap_page.linksInTags, results.parse_url);
-        scanModel.statistics.linksInTags.percentage = scanModel.crawlerResults.linksInTagsStats.percentage;
+        if(scanModel.crawlerResults.linksInTagsStats.totalNumOfLinks === 0){
+          scanModel.statistics.linksInTags = {percentage:100};
+          scanModel.crawlerResults.linksInTagsStats.percentage = 100;
+        }
+        else {
+          scanModel.statistics.linksInTags.percentage = scanModel.crawlerResults.linksInTagsStats.percentage;
+        }
         scanModel.crawlerResults.serverFormHandler = results.scrap_page.formObject;
         scanModel.statistics.sfh = serverFormHandlerStatistics(results.scrap_page.formObject, results.parse_url);
         scanModel.crawlerResults.iFrame = results.scrap_page.iFrameArray;
@@ -1127,25 +1134,12 @@ function googleBlackListLookup(url,cb){
 
 }
 
-export function scanURLAndExtractFeatures(url, cb){
-
+export function scanURLAndExtractFeatures(scan, cb){
+  let url = scan.url;
+  let target = scan.target;
+  let owner = scan.owner;
   async.auto({
     ping_website: function(callback) {
-     /* var options = {
-        method: 'GET',
-        uri: url,
-        resolveWithFullResponse: true    //  <---  <---  <---  <---
-      };
-      let online = {isOnline:true};*/
-     /* rp(options)
-        .then(function (response) {
-          online.statusCode = response.statusCode;
-          callback(null, online);
-        },function (err) {
-          online.isOnline = false;
-          console.log(err);
-          callback(online, null);
-        });*/
       checkUrlExists(url, function(err, result){
         if (!err) {
           //console.log(result);
@@ -1401,6 +1395,8 @@ export function scanURLAndExtractFeatures(url, cb){
     if(!err) {
       try {
         let scanStatistics = extractValuablePhishingAttributesFromApiResults(results);
+        scanStatistics.target = target;
+        scanStatistics.owner = owner;
         return cb(null, scanStatistics);
       } catch (error) {
         return cb(error, SCAN_ERROR_MESSAGES.ERROR_IN_SCAN_STATISTICS)
@@ -1408,7 +1404,8 @@ export function scanURLAndExtractFeatures(url, cb){
     }
     else{
       if(err && err.isOnline === false){
-        return cb(null, SCAN_ERROR_MESSAGES.WEBSITE_NOT_ACCESSIBLE);
+        let result = {message: SCAN_ERROR_MESSAGES.WEBSITE_NOT_ACCESSIBLE};
+        return cb(null, result);
       }
       else {
         return cb(err, "An error has occurred!");
