@@ -113,11 +113,11 @@ export function create(req, res) {
   ScanService.checkURL(req.body, function(err, scan) {
 
     if(err){
-      console.log(err, result);
+      console.log(err);
       return res.status(500).send(err);
     }
     else {
-      if(scan && scan.message === "The website is not currently online!"){
+      if(scan && scan.message){
         return res.status(200).json(scan);
       }
       else if(scan && scan.checkUrl.url_lookup_db){
