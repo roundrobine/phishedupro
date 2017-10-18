@@ -322,7 +322,8 @@ const RULE_CODES = {
 
 const SCAN_ERROR_MESSAGES = {
   WEBSITE_NOT_ACCESSIBLE: "The website is not currently online!",
-  ERROR_IN_SCAN_STATISTICS: "Error in the scanStatistics function!"
+  ERROR_IN_SCAN_STATISTICS: "Error in the scanStatistics function!",
+  CRAWLER_NAVIGATION_ERROR: "navigation error"
 }
 
 module.exports = {
