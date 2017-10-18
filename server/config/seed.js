@@ -168,7 +168,7 @@ Rule.find({}).removeAsync()
       'legitimate websites ranked among the top 200,000. ' +
       'Furthermore, if the domain has no traffic or is not recognized by the Alexa database, ' +
       'it is classified as “Phishing”. Otherwise, it is classified as “Suspicious”.',
-      suspicious: 200000,
+      suspicious: 500000,
       phishing: -2,
       active: true
     },{
