@@ -109,30 +109,48 @@ export function show(req, res) {
 // Creates a new Scan in the DB
 export function create(req, res) {
   let startTime = Date.now();
-    ScanService.scanURLAndExtractFeatures(req.body, function(err, result) {
-      if(err) {
-        console.log(err, result);
-        return res.status(500).send(err);
-      }
-      else {
-        if(result && result.message === "The website is not currently online!"){
 
-            return res.status(200).json(result);
+  ScanService.checkURL(req.body, function(err, scan) {
+
+    if(err){
+      console.log(err, result);
+      return res.status(500).send(err);
+    }
+    else {
+      if(scan && scan.message === "The website is not currently online!"){
+        return res.status(200).json(scan);
+      }
+      else if(scan && scan.checkUrl.url_lookup_db){
+        return res.status(200).json(scan.checkUrl.url_lookup_db);
+      }
+
+      ScanService.scanURLAndExtractFeatures(scan, function (err, result) {
+        if (err) {
+          console.log(err, result);
+          return res.status(500).send(err);
         }
         else {
-          ScanService.generatePhishingFeatureSet(result, function (err, rules) {
-            let endTime = Date.now();
-            let responseTime = (Math.round((endTime - startTime) * 100) / 100000 );
-            result.responseTime = responseTime;
-            console.log("Request time: ", responseTime);
-            Scan.createAsync(result)
-              .then(responseWithResult(res, 201))
-              .catch(handleError(res));
-          });
-        }
-      }
+        /*  if (result && result.message === "The website is not currently online!") {
 
-    });
+            return res.status(200).json(result);
+          }
+          else {*/
+            ScanService.generatePhishingFeatureSet(result, function (err, rules) {
+              let endTime = Date.now();
+              let responseTime = (Math.round((endTime - startTime) * 100) / 100000 );
+              result.responseTime = responseTime;
+              console.log("Request time: ", responseTime);
+              Scan.createAsync(result)
+                .then(responseWithResult(res, 201))
+                .catch(handleError(res));
+            });
+          }
+       /* }*/
+
+      });
+    }
+
+  });
 
 }
 

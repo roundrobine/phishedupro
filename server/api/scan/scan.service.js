@@ -1,6 +1,7 @@
 'use strict';
 import config from '../../config/environment';
 import Rule from '../rule/rule.model';
+import Scan from '../scan/scan.model';
 import _ from 'lodash';
 const MY_WOT = require('./scan.config').MY_WOT;
 const MOZCAPE = require('./scan.config').MOZCAPE;
@@ -202,8 +203,6 @@ function checkUrlExists(url, cb) {
     // It will emit 'error' message as well (with ECONNRESET code).
 
     console.log('timeout');
-    online.isOnline = false;
-    cb(online, null);
     req.abort();
   });
 
@@ -784,10 +783,10 @@ function extractValuablePhishingAttributesFromApiResults(results){
         scanModel.statistics.ageOfDomain = {days:UNKNOWN};
         scanModel.statistics.domainRegistrationLength = {days:UNKNOWN};
 
-        if(scanModel.whoisRecord.domainAgeDays) {
+        if(scanModel.whoisRecord.domainAgeDays >= 0) {
           scanModel.statistics.ageOfDomain.days = scanModel.whoisRecord.domainAgeDays;
         }
-        if(scanModel.whoisRecord.expiresInDays) {
+        if(scanModel.whoisRecord.expiresInDays >= 0) {
           scanModel.statistics.domainRegistrationLength.days = scanModel.whoisRecord.expiresInDays;
         }
 
@@ -1134,13 +1133,10 @@ function googleBlackListLookup(url,cb){
 
 }
 
-export function scanURLAndExtractFeatures(scan, cb){
-  let url = scan.url;
-  let target = scan.target;
-  let owner = scan.owner;
+export function checkURL(scan,cb){
   async.auto({
     ping_website: function(callback) {
-      checkUrlExists(url, function(err, result){
+      checkUrlExists(scan.url, function(err, result){
         if (!err) {
           //console.log(result);
           callback(null, result);
@@ -1153,8 +1149,7 @@ export function scanURLAndExtractFeatures(scan, cb){
     get_final_url: ['ping_website', function(results, callback){
       var nightmareUrl = Nightmare({ show: false });
       nightmareUrl
-        .goto(url)
-        /*.wait(300)*/
+        .goto(scan.url)
         .evaluate(function () {
           let urlAddressBar = window.location.href;
           return {
@@ -1163,20 +1158,19 @@ export function scanURLAndExtractFeatures(scan, cb){
         })
         .end()
         .then(function (result) {
-           console.log(result);
+          console.log(result);
           callback(null, result);
         }, function (error) {
           console.error('Search failed:', error);
           callback(error, null);
         });
-
     }],
     scrap_page: ['ping_website', function(results, callback) {
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
-        .goto(url)
-        .wait(1503)
+        .goto(scan.url)
+        .wait(1603)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -1256,6 +1250,179 @@ export function scanURLAndExtractFeatures(scan, cb){
         });
     }],
     unshort_url: ['ping_website', function(results, callback) {
+      tall(scan.url)
+        .then(function(unshortenedUrl) {
+          let urlObject = {};
+          urlObject.isShortenedURL = false;
+          let originalUrl = scan.url;
+          urlObject.originalUrl = originalUrl;
+          urlObject.unshortUrl = null;
+
+          if(originalUrl !== unshortenedUrl && validUrl.isUri(unshortenedUrl)) {
+
+            let originalParsedUrl =  urlParser.parse(originalUrl);
+            let unshortenedParsedUrl = urlParser.parse(unshortenedUrl);
+
+            if(originalParsedUrl && unshortenedParsedUrl && originalParsedUrl.hostname && unshortenedParsedUrl.hostname
+              && originalParsedUrl.hostname !== unshortenedParsedUrl.hostname)
+              urlObject.isShortenedURL = true;
+            urlObject.unshortUrl = unshortenedUrl;
+          }
+
+          console.log('Tall url', unshortenedUrl);
+          console.log('Original url', originalUrl);
+
+          callback(null, urlObject);
+        })
+        .catch(function(err) {
+          callback(err, null);
+        })
+      ;
+    }],
+    url_lookup_db: ['get_final_url', function(results, callback) {
+      Scan.findOne({ 'url': results.get_final_url.finalUrl },  function (err, result) {
+        if (err)
+          return callback(err, null);
+        console.log("Result from db url", result);
+        return callback(null, result);
+      })
+    }]}, function(err, results) {
+      if(!err) {
+        scan.checkUrl = results;
+        return cb(null, scan);
+      }
+      else{
+        if(err && err.isOnline === false){
+          let result = {message: SCAN_ERROR_MESSAGES.WEBSITE_NOT_ACCESSIBLE};
+          return cb(null, result);
+        }
+        else {
+          return cb(err, "An error in checkURL function has occurred!");
+        }
+      }
+    });
+}
+
+export function scanURLAndExtractFeatures(scan, cb){
+  let url = scan.url;
+  let target = scan.target;
+  let owner = scan.owner;
+  let finalURL = scan.checkUrl.get_final_url;
+  let unshort_url = scan.checkUrl.unshort_url;
+  async.auto({
+   /* ping_website: function(callback) {
+      checkUrlExists(url, function(err, result){
+        if (!err) {
+          //console.log(result);
+          callback(null, result);
+        } else {
+          //console.log(err);
+          callback(err, result);
+        }
+      })
+    },
+    get_final_url: ['ping_website', function(results, callback){
+      var nightmareUrl = Nightmare({ show: false });
+      nightmareUrl
+        .goto(url)
+        /!*.wait(300)*!/
+        .evaluate(function () {
+          let urlAddressBar = window.location.href;
+          return {
+            "finalUrl": urlAddressBar
+          };
+        })
+        .end()
+        .then(function (result) {
+           console.log(result);
+          callback(null, result);
+        }, function (error) {
+          console.error('Search failed:', error);
+          callback(error, null);
+        });
+
+    }],*/
+  /*  scrap_page: function(callback) {
+      var nightmare = Nightmare({ show: true });
+      console.log('it enters');
+      nightmare
+        .goto(finalURL)
+        .wait(1503)
+        .evaluate(function () {
+          let hrefArray = [];
+          let reqURLArray = [];
+          let formArray = [];
+          let iFrameArray = [];
+          let inputTextArray = [];
+          let linksInTags = [];
+
+          let linksInTagsTemp = document.querySelectorAll("link, script");
+          for (let i=0;i<linksInTagsTemp.length;i++) {
+            if (linksInTagsTemp[i].href) {
+              linksInTags.push(linksInTagsTemp[i].href);
+            }
+            else if (linksInTagsTemp[i].src) {
+              linksInTags.push(linksInTagsTemp[i].src);
+            }
+          }
+
+          let hrefArrayTemp = document.querySelectorAll("a");
+          for (let i=0;i<hrefArrayTemp.length;i++) {
+            if (hrefArrayTemp[i].href)
+              hrefArray.push(hrefArrayTemp[i].href);
+          }
+
+          let reqURLArrayTemp = document.querySelectorAll("img, embed, video, audio, source");
+          for (let i=0;i<reqURLArrayTemp.length;i++) {
+            if (reqURLArrayTemp[i].src)
+              reqURLArray.push(reqURLArrayTemp[i].src);
+          }
+
+
+          let formArrayTemp = document.querySelectorAll("form");
+          let formObject = {hasForm:false};
+          if(formArrayTemp && formArrayTemp.length > 0) {
+            formObject.hasForm = true;
+
+            for (let i = 0; i < formArrayTemp.length; i++) {
+
+              if (formArrayTemp[i].action)
+                formArray.push(formArrayTemp[i].action);
+            }
+            formObject.actionArray = formArray;
+          }
+
+          let iFrameArrayTemp = document.querySelectorAll("iframe");
+          for (let i=0;i<iFrameArrayTemp.length;i++) {
+            if (iFrameArrayTemp[i].src)
+              iFrameArray.push(iFrameArrayTemp[i].src);
+          }
+
+
+          let inputTextArrayTemp = document.querySelectorAll("input[type='password'], input[type='text']," +
+            " input[type='email'], input[type='tel']");
+          for (let i=0;i<inputTextArrayTemp.length;i++) {
+            if (inputTextArrayTemp[i])
+              inputTextArray.push(inputTextArrayTemp[i].type);
+          }
+
+          return {
+            "hrefArray": hrefArray,
+            "reqURLArray": reqURLArray,
+            "linksInTags": linksInTags,
+            "formObject": formObject,
+            "iFrameArray": iFrameArray,
+            "inputTextArray": inputTextArray
+          };
+        })
+        .end()
+        .then(function (result) {
+          callback(null, result);
+        }, function (error) {
+          callback(error, null);
+        });
+    },
+    unshort_url: function(callback) {
       tall(url)
         .then(function(unshortenedUrl) {
           let urlObject = {};
@@ -1284,13 +1451,13 @@ export function scanURLAndExtractFeatures(scan, cb){
           callback(err, null);
         })
       ;
-    }],
-    parse_url: ['unshort_url','get_final_url', function(results, callback) {
+    },*/
+    parse_url: function(callback) {
       let myUrl = null;
-      if(results.get_final_url && results.get_final_url.finalUrl && (validUrl.isHttpUri(results.get_final_url.finalUrl) || validUrl.isHttpsUri(results.get_final_url.finalUrl)))
-        myUrl = urlParser.parse(results.get_final_url.finalUrl);
-      else if (results.unshort_url && results.unshort_url.unshortUrl && (validUrl.isHttpUri(results.unshort_url.unshortUrl) || validUrl.isHttpsUri(results.unshort_url.unshortUrl)))
-        myUrl = urlParser.parse(results.unshort_url.unshortUrl);
+      if(finalURL && (validUrl.isHttpUri(finalURL.finalUrl) || validUrl.isHttpsUri(finalURL.finalUrl)))
+        myUrl = urlParser.parse(finalURL.finalUrl);
+      else if (unshort_url && unshort_url.unshortUrl && (validUrl.isHttpUri(unshort_url.unshortUrl) || validUrl.isHttpsUri(unshort_url.unshortUrl)))
+        myUrl = urlParser.parse(unshort_url.unshortUrl);
       else
         myUrl = urlParser.parse(url);
 
@@ -1323,7 +1490,7 @@ export function scanURLAndExtractFeatures(scan, cb){
           }
 
         });
-    }],
+    },
     alexa_ranking: ['parse_url', function(results, callback) {
       alexa(results.parse_url.href, function(error, result) {
         if (!error) {
@@ -1394,6 +1561,8 @@ export function scanURLAndExtractFeatures(scan, cb){
   }, function(err, results) {
     if(!err) {
       try {
+
+        results = _.assign(results, scan.checkUrl);
         let scanStatistics = extractValuablePhishingAttributesFromApiResults(results);
         scanStatistics.target = target;
         scanStatistics.owner = owner;
@@ -1403,13 +1572,13 @@ export function scanURLAndExtractFeatures(scan, cb){
       }
     }
     else{
-      if(err && err.isOnline === false){
+    /*  if(err && err.isOnline === false){
         let result = {message: SCAN_ERROR_MESSAGES.WEBSITE_NOT_ACCESSIBLE};
         return cb(null, result);
       }
-      else {
-        return cb(err, "An error has occurred!");
-      }
+      else {*/
+        return cb(err, "An error has occurred in scanURLAndExtractFeatures function!");
+      /*}*/
     }
 
   });
