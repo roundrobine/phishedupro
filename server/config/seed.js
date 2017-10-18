@@ -143,7 +143,7 @@ Rule.find({}).removeAsync()
     },{
       name: 'Using Input Fields (Password, Text, Email, Tel)',
       code: 'inputFields',
-      weight: 0.0611,
+      weight: 0.0847,
       description: 'Phishers usually lure their victims to disclose their personal information like: emails, passwords,' +
       'credit card numbers, and phone numbers so they can take advantage of it. We need to check if the' +
       'users are requested to input their personal info into a website that does not support https.',
@@ -252,7 +252,7 @@ Rule.find({}).removeAsync()
     });
   });
 
-User.find({}).removeAsync()
+/*User.find({}).removeAsync()
   .then(() => {
     User.createAsync({
       provider: 'local',
@@ -269,4 +269,4 @@ User.find({}).removeAsync()
     .then(() => {
       console.log('finished populating users');
     });
-  });
+  });*/
