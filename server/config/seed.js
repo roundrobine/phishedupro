@@ -209,7 +209,7 @@ Rule.find({}).removeAsync()
       'This score can then be used when comparing websites or tracking the "ranking strength" of a website over time. ' +
       'The rule is if PA > 15 the page is legitimate otherwise it is phishing',
       suspicious: 17,
-      phishing: 12,
+      phishing: 8,
       active: true
     },{
       name: 'Number of Links Pointing to Page',
