@@ -276,11 +276,21 @@ export function generatePhishingFeatureSet(scanResults, cb){
                 if(scanStatistics.ssl.value === PHISHING_CLASS.phishing){
                   urlScore = urlScore + rules[i].weight;
                 }
+                else if(scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration > 0
+                  && scanStatistics.ssl.expiresIn > -1 && scanStatistics.ssl.completeCertChain && scanResults.urlStatisitcs.whitelistedDomain){
+
+                    scanStatistics.ssl.value = PHISHING_CLASS.legitimate;
+                }
                 else if (scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
-                && scanStatistics.ssl.completeCertChain){
+                && scanStatistics.ssl.completeCertChain && !scanResults.urlStatisitcs.topPhishingDomain){
                   scanStatistics.ssl.value = PHISHING_CLASS.legitimate;
                 }
                 else if(!scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1){
+                  scanStatistics.ssl.value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight /2);
+                }
+                else if(scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
+                  && scanStatistics.ssl.completeCertChain && scanResults.urlStatisitcs.topPhishingDomain){
                   scanStatistics.ssl.value = PHISHING_CLASS.suspicious;
                   urlScore = urlScore + (rules[i].weight /2);
                 }
@@ -358,7 +368,9 @@ export function generatePhishingFeatureSet(scanResults, cb){
                   scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.phishing;
                   urlScore = urlScore + rules[i].weight;
                 }
-                else if (scanStatistics.websiteTrafficAlexa.rank > rules[i].suspicious){
+                else if (scanStatistics.websiteTrafficAlexa.rank > rules[i].suspicious ||
+                  (scanStatistics.websiteTrafficAlexa.rank > rules[i].phishing && scanStatistics.websiteTrafficAlexa.rank <= rules[i].suspicious
+                    && scanResults.urlStatisitcs.topPhishingDomain)){
                   scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.suspicious;
                   urlScore = urlScore + (rules[i].weight / 2);
                 }
@@ -380,7 +392,7 @@ export function generatePhishingFeatureSet(scanResults, cb){
               break;
             case RULE_CODES.inputFields:
               if(scanStatistics.ssl && scanStatistics.inputFields){
-                if(scanStatistics.ssl &&  scanStatistics.ssl.value === PHISHING_CLASS.phishing){
+                if(scanStatistics.ssl.value === PHISHING_CLASS.phishing){
 
                   if(scanStatistics.inputFields.numOfPasswordFields > 0){
                     scanStatistics.inputFields.value = PHISHING_CLASS.phishing;
@@ -393,18 +405,14 @@ export function generatePhishingFeatureSet(scanResults, cb){
                   else{
                     scanStatistics.inputFields.value = PHISHING_CLASS.legitimate;
                   }
-
                 }
-                else if (scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
-                  && scanStatistics.ssl.completeCertChain){
+                else if (scanStatistics.ssl.value === PHISHING_CLASS.legitimate){
                   scanStatistics.inputFields.value = PHISHING_CLASS.legitimate;
                 }
-                else if(!scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1){
-                  if(scanStatistics.inputFields.numOfTextFields > 0 || scanStatistics.inputFields.numOfPasswordFields > 0) {
+                else if(scanStatistics.ssl.value === PHISHING_CLASS.suspicious
+                  && (scanStatistics.inputFields.numOfTextFields > 0 || scanStatistics.inputFields.numOfPasswordFields > 0)){
                     scanStatistics.inputFields.value = PHISHING_CLASS.suspicious;
                     urlScore = urlScore + (rules[i].weight /2);
-                  }
-
                 }
                 else{
                   if(scanStatistics.inputFields.numOfTextFields > 0 && scanStatistics.inputFields.numOfPasswordFields === 0){
@@ -470,7 +478,9 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
     if(nextUrl && nextUrl.href && (validUrl.isHttpUri(nextUrl.href) || validUrl.isHttpsUri(nextUrl.href))) {
       if (!nextUrl.isUrlIPAddress && nextUrl.hostname) {
         nextUrl.tokenizeHost = parseDomain(nextUrl.hostname);
-        newHostNoSubdomain = nextUrl.tokenizeHost.domain + "." + nextUrl.tokenizeHost.tld;
+        if(nextUrl.tokenizeHost) {
+          newHostNoSubdomain = nextUrl.tokenizeHost.domain + "." + nextUrl.tokenizeHost.tld;
+        }
       }
 
       if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
@@ -1146,7 +1156,7 @@ export function checkURL(scan,cb){
         }
       })
     },
-    get_final_url: ['ping_website', function(results, callback){
+    /*get_final_url: ['ping_website', function(results, callback){
       var nightmareUrl = Nightmare({ show: false });
       nightmareUrl
         .goto(scan.url)
@@ -1164,7 +1174,7 @@ export function checkURL(scan,cb){
           console.error('Search failed:', error);
           callback(error, null);
         });
-    }],
+    }],*/
     scrap_page: ['ping_website', function(results, callback) {
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
@@ -1248,6 +1258,7 @@ export function checkURL(scan,cb){
         }, function (error) {
           callback(error, null);
         });
+
     }],
     unshort_url: ['ping_website', function(results, callback) {
       tall(scan.url)
@@ -1273,27 +1284,34 @@ export function checkURL(scan,cb){
           console.log('Original url', originalUrl);
 
           callback(null, urlObject);
-        })
-        .catch(function(err) {
+        },function(err) {
           callback(err, null);
-        })
+        });
       ;
     }],
-    url_lookup_db: ['get_final_url', function(results, callback) {
-      Scan.findOne({ 'url': results.get_final_url.finalUrl },  function (err, result) {
+    url_lookup_db: ['scrap_page', function(results, callback) {
+      console.log("Enters in url_db_lookup");
+      Scan.findOne({ 'url': results.scrap_page.finalUrl },  function (err, result) {
         if (err)
           return callback(err, null);
         console.log("Result from db url", result);
         return callback(null, result);
       })
     }]}, function(err, results) {
+
+    console.log("Etests in result part of the checkUrl function!");
       if(!err) {
         scan.checkUrl = results;
+        scan.checkUrl.get_final_url = {finalUrl: scan.checkUrl.scrap_page.finalUrl};
         return cb(null, scan);
       }
       else{
         if(err && err.isOnline === false){
           let result = {message: SCAN_ERROR_MESSAGES.WEBSITE_NOT_ACCESSIBLE};
+          return cb(null, result);
+        }
+        else if(err && err.message === SCAN_ERROR_MESSAGES.CRAWLER_NAVIGATION_ERROR){
+          let result = {message: SCAN_ERROR_MESSAGES.CRAWLER_NAVIGATION_ERROR};
           return cb(null, result);
         }
         else {
