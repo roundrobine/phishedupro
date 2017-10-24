@@ -90,7 +90,7 @@ Rule.find({}).removeAsync()
       description: 'Based on the fact that a phishing website lives for a short period of time, we believe ' +
       'that trustworthy domains are regularly paid for several years in advance. In our dataset, ' +
       'we find that the longest fraudulent domains have been used for one year only.',
-      phishing: 365,
+      phishing: 364,
       active: true
     },{
       name: 'Request URL',
