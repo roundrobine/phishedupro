@@ -173,16 +173,17 @@ function checkUrlExists(url, cb) {
   };
   let online = {isOnline:true};
   var req = http.request(options, function (res) {
-    if (('' + res.statusCode).match(/^5\d\d$/)){
+   /* if (('' + res.statusCode).match(/^5\d\d$/)){
     // Server error, I have no idea what happend in the backend
     // but server at least returned correctly (in a HTTP protocol
     // sense) formatted response
+      //console.log("Not online: ", res);
       online.isOnline = false;
       cb(online, null);
     }
-    else{
+    else{*/
       cb(null, online);
-    }
+  /*  }*/
 
   });
   req.on('error', function (e) {
@@ -192,6 +193,7 @@ function checkUrlExists(url, cb) {
     //  - HPE_INVALID_VERSION
     //  - HPE_INVALID_STATUS
     //  - ... (other HPE_* codes) - server returned garbage
+    console.log("Not online: ", e);
     online.isOnline = false;
     cb(online, null);
   });
@@ -462,9 +464,12 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
 
   let baseHostNoSubdomain = null;
   let newHostNoSubdomain = null;
+  let onlyBaseDomainHost = null;
+  let onlyNewDomainHost = null;
 
   if(!parsedUrl.isUrlIPAddress) {
     baseHostNoSubdomain = parsedUrl.tokenizeHost.domain + "." + parsedUrl.tokenizeHost.tld;
+    onlyBaseDomainHost = parsedUrl.tokenizeHost.domain;
   }
 
   anchorArray.forEach(function(url){
@@ -480,12 +485,13 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
         nextUrl.tokenizeHost = parseDomain(nextUrl.hostname);
         if(nextUrl.tokenizeHost) {
           newHostNoSubdomain = nextUrl.tokenizeHost.domain + "." + nextUrl.tokenizeHost.tld;
+          onlyNewDomainHost = nextUrl.tokenizeHost.domain;
         }
       }
 
       if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
 
-        if (nextUrl.pathname === parsedUrl.pathname) {
+        if (nextUrl.path === parsedUrl.path) {
           invalidLinks = invalidLinks + 1;
           urlOfAnchor.invalidLinksArray.push(nextUrl.href);
         }
@@ -495,6 +501,10 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
         }
       }
       else if (newHostNoSubdomain && baseHostNoSubdomain && newHostNoSubdomain === baseHostNoSubdomain) {
+        validLinks = validLinks + 1;
+        urlOfAnchor.validLinksArray.push(nextUrl.href);
+      }
+      else if(onlyNewDomainHost && onlyBaseDomainHost && onlyNewDomainHost === onlyBaseDomainHost){
         validLinks = validLinks + 1;
         urlOfAnchor.validLinksArray.push(nextUrl.href);
       }
@@ -775,7 +785,11 @@ function extractValuablePhishingAttributesFromApiResults(results){
           }
         }
 
-        if (scanModel.whoisRecord.createdDate && scanModel.whoisRecord.expiresDate) {
+        if (scanModel.whoisRecord.updatedDate && scanModel.whoisRecord.expiresDate) {
+          let from = scanModel.whoisRecord.updatedDate;
+          let to = scanModel.whoisRecord.expiresDate;
+          scanModel.whoisRecord.expiresInDays = to.diff(from, "days");
+        } else if (scanModel.whoisRecord.createdDate && scanModel.whoisRecord.expiresDate) {
           let from = scanModel.whoisRecord.createdDate;
           let to = scanModel.whoisRecord.expiresDate;
           scanModel.whoisRecord.expiresInDays = to.diff(from, "days");
@@ -1180,7 +1194,7 @@ export function checkURL(scan,cb){
       console.log('it enters');
       nightmare
         .goto(scan.url)
-        .wait(1603)
+        .wait(1789)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -1298,9 +1312,8 @@ export function checkURL(scan,cb){
         return callback(null, result);
       })
     }]}, function(err, results) {
-
-    console.log("Etests in result part of the checkUrl function!");
       if(!err) {
+        console.log(err);
         scan.checkUrl = results;
         scan.checkUrl.get_final_url = {finalUrl: scan.checkUrl.scrap_page.finalUrl};
         return cb(null, scan);
