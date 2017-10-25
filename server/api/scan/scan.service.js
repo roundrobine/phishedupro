@@ -37,6 +37,12 @@ const INPUT_TYPE_EMAIL = "email";
 const INPUT_TYPE_TEL = "tel";
 const UNKNOWN = -2;
 const WHOIS_DATE_FORMAT = "YYYY-MM-DD HH:mm:ss Z";
+const GOOGLE_ANALYTICS = "google-analytics.com";
+const GOOGLE_APIS = "googleapis.com";
+const GOOGLE = "google";
+const GRAVATAR = "gravatar.com";
+const LINKS_IN_TAGS = "linksInTags";
+const REQUEST_URLS = "requestUrl";
 
 var Nightmare = require('nightmare');
 
@@ -449,7 +455,7 @@ export function generatePhishingFeatureSet(scanResults, cb){
 }
 
 
-function urlOfAnchorStatistics(anchorArray, parsedUrl){
+function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
   let urlOfAnchor = {
     totalNumOfLinks:0,
     validNumOfLinks:0,
@@ -508,11 +514,16 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl){
         validLinks = validLinks + 1;
         urlOfAnchor.validLinksArray.push(nextUrl.href);
       }
+      else if(linkType && newHostNoSubdomain && onlyNewDomainHost &&
+        (newHostNoSubdomain === GOOGLE_ANALYTICS || newHostNoSubdomain === GOOGLE_APIS
+          || onlyNewDomainHost === GOOGLE || newHostNoSubdomain === GRAVATAR) ){
+        validLinks = validLinks + 1;
+        urlOfAnchor.validLinksArray.push(nextUrl.href);
+      }
       else {
         invalidLinks = invalidLinks + 1;
         urlOfAnchor.invalidLinksArray.push(nextUrl.href);
       }
-
     }
     else{
       invalidLinks = invalidLinks + 1;
@@ -622,10 +633,10 @@ function extractValuablePhishingAttributesFromApiResults(results){
         else {
           scanModel.statistics.urlOfAnchors.percentage = scanModel.crawlerResults.urlOfAnchorsStats.percentage;
         }
-        scanModel.crawlerResults.requestUrlsStats = urlOfAnchorStatistics(results.scrap_page.reqURLArray, results.parse_url);
+        scanModel.crawlerResults.requestUrlsStats = urlOfAnchorStatistics(results.scrap_page.reqURLArray, results.parse_url, REQUEST_URLS);
         scanModel.statistics.requestUrls.percentage = scanModel.crawlerResults.requestUrlsStats.percentage;
 
-        scanModel.crawlerResults.linksInTagsStats = urlOfAnchorStatistics(results.scrap_page.linksInTags, results.parse_url);
+        scanModel.crawlerResults.linksInTagsStats = urlOfAnchorStatistics(results.scrap_page.linksInTags, results.parse_url, LINKS_IN_TAGS);
         if(scanModel.crawlerResults.linksInTagsStats.totalNumOfLinks === 0){
           scanModel.statistics.linksInTags = {percentage:100};
           scanModel.crawlerResults.linksInTagsStats.percentage = 100;
@@ -845,7 +856,7 @@ function extractValuablePhishingAttributesFromApiResults(results){
           if(results.ssl_check.response.san_entries){
             scanModel.sslCertificate.san_entries = results.ssl_check.response.san_entries;
             if(results.ssl_check.response.subject && results.ssl_check.response.subject.CN) {
-
+              console.log("Subject CN: ", results.ssl_check.response.subject.CN);
               scanModel.sslCertificate.existInSANEntries = _.some(scanModel.sslCertificate.san_entries, function (url) {
                 return url === results.ssl_check.response.subject.CN
               });
@@ -1544,6 +1555,17 @@ export function scanURLAndExtractFeatures(scan, cb){
         }
       })
     }],
+    ssl_check: ['parse_url', function(results, callback) {
+      sslCheck(results.parse_url, function(err, result){
+        if (!err) {
+          /*console.log(result);*/
+          callback(null, result);
+        } else {
+          console.log(err);
+          callback(err, result);
+        }
+      })
+    }],
     whois_lookup: ['parse_url', function(results, callback) {
       whoisXmlApi(results.parse_url.hostname, function(err, result){
         if (!err) {
@@ -1553,17 +1575,6 @@ export function scanURLAndExtractFeatures(scan, cb){
         } else {
           console.log(err);
           return callback(err);
-        }
-      })
-    }],
-    ssl_check: ['parse_url', function(results, callback) {
-      sslCheck(results.parse_url, function(err, result){
-        if (!err) {
-          //console.log(result);
-          callback(null, result);
-        } else {
-          console.log(err);
-          callback(err, result);
         }
       })
     }],
@@ -1592,7 +1603,7 @@ export function scanURLAndExtractFeatures(scan, cb){
   }, function(err, results) {
     if(!err) {
       try {
-
+        console.log("Enters in the last part of the algorthm");
         results = _.assign(results, scan.checkUrl);
         let scanStatistics = extractValuablePhishingAttributesFromApiResults(results);
         scanStatistics.target = target;
