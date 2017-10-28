@@ -52,11 +52,16 @@ function handleError(res, statusCode) {
   };
 }
 
-function responseWithResult(res, statusCode) {
+function responseWithResult(res, rules, statusCode) {
   statusCode = statusCode || 200;
+
   return function(entity) {
     if (entity) {
-      res.status(statusCode).json(entity);
+      let scanObject = entity.toObject();
+      if (rules){
+        scanObject.rules = rules;
+      }
+      res.status(statusCode).json(scanObject);
     }
   };
 }
@@ -142,7 +147,15 @@ export function create(req, res) {
               result.responseTime = responseTime;
               console.log("Request time: ", responseTime);
               Scan.createAsync(result)
-                .then(responseWithResult(res, 201))
+                /*.then(function(rules){
+                  return function(entity) {
+                    if(rules) {
+                      entity.rules = rules;
+                    }
+                      return entity;
+                  };
+                })*/
+                .then(responseWithResult(res, rules,  201))
                 .catch(handleError(res));
             });
           }
