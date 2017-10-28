@@ -266,7 +266,16 @@ export function generatePhishingFeatureSet(scanResults, cb){
             case RULE_CODES.pageAuthority:
             case RULE_CODES.myWOT:
               if(scanStatistics[rules[i].code]){
-                if(scanStatistics[rules[i].code].count < rules[i].phishing || scanResults.myWOT.isBlacklisted){
+                if(rules[i].code === RULE_CODES.myWOT && scanResults.alexa.isRanked
+                  && !scanResults.isBlacklisted && !scanResults.myWOT.hasWOTStatistics){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
+                else if(rules[i].code === RULE_CODES.myWOT && scanResults.myWOT.isBlacklisted){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + rules[i].weight;
+                }
+                else if(scanStatistics[rules[i].code].count < rules[i].phishing){
                   scanStatistics[rules[i].code].value = PHISHING_CLASS.phishing;
                   urlScore = urlScore + rules[i].weight;
                 }
@@ -448,7 +457,7 @@ export function generatePhishingFeatureSet(scanResults, cb){
         scanResults.finalScore = 100;
       }
 
-      cb(null,"Success");
+      cb(null,rules);
     },function(err){
       cb(err, null);
     })
@@ -1181,31 +1190,12 @@ export function checkURL(scan,cb){
         }
       })
     },
-    /*get_final_url: ['ping_website', function(results, callback){
-      var nightmareUrl = Nightmare({ show: false });
-      nightmareUrl
-        .goto(scan.url)
-        .evaluate(function () {
-          let urlAddressBar = window.location.href;
-          return {
-            "finalUrl": urlAddressBar
-          };
-        })
-        .end()
-        .then(function (result) {
-          console.log(result);
-          callback(null, result);
-        }, function (error) {
-          console.error('Search failed:', error);
-          callback(error, null);
-        });
-    }],*/
     scrap_page: ['ping_website', function(results, callback) {
       var nightmare = Nightmare({ show: true });
       console.log('it enters');
       nightmare
         .goto(scan.url)
-        .wait(1789)
+        .wait(1899)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -1319,9 +1309,17 @@ export function checkURL(scan,cb){
       Scan.findOne({ 'url': results.scrap_page.finalUrl },  function (err, result) {
         if (err)
           return callback(err, null);
-        console.log("Result from db url", result);
-        return callback(null, result);
-      })
+        if(result){
+          Rule.find().lean().execAsync()
+            .then(function(rules) {
+              result.rules = rules;
+              return callback(null, result);
+            })
+        }
+        else {
+          return callback(null, result);
+        }
+      }).lean()
     }]}, function(err, results) {
       if(!err) {
         console.log(err);
@@ -1352,148 +1350,6 @@ export function scanURLAndExtractFeatures(scan, cb){
   let finalURL = scan.checkUrl.get_final_url;
   let unshort_url = scan.checkUrl.unshort_url;
   async.auto({
-   /* ping_website: function(callback) {
-      checkUrlExists(url, function(err, result){
-        if (!err) {
-          //console.log(result);
-          callback(null, result);
-        } else {
-          //console.log(err);
-          callback(err, result);
-        }
-      })
-    },
-    get_final_url: ['ping_website', function(results, callback){
-      var nightmareUrl = Nightmare({ show: false });
-      nightmareUrl
-        .goto(url)
-        /!*.wait(300)*!/
-        .evaluate(function () {
-          let urlAddressBar = window.location.href;
-          return {
-            "finalUrl": urlAddressBar
-          };
-        })
-        .end()
-        .then(function (result) {
-           console.log(result);
-          callback(null, result);
-        }, function (error) {
-          console.error('Search failed:', error);
-          callback(error, null);
-        });
-
-    }],*/
-  /*  scrap_page: function(callback) {
-      var nightmare = Nightmare({ show: true });
-      console.log('it enters');
-      nightmare
-        .goto(finalURL)
-        .wait(1503)
-        .evaluate(function () {
-          let hrefArray = [];
-          let reqURLArray = [];
-          let formArray = [];
-          let iFrameArray = [];
-          let inputTextArray = [];
-          let linksInTags = [];
-
-          let linksInTagsTemp = document.querySelectorAll("link, script");
-          for (let i=0;i<linksInTagsTemp.length;i++) {
-            if (linksInTagsTemp[i].href) {
-              linksInTags.push(linksInTagsTemp[i].href);
-            }
-            else if (linksInTagsTemp[i].src) {
-              linksInTags.push(linksInTagsTemp[i].src);
-            }
-          }
-
-          let hrefArrayTemp = document.querySelectorAll("a");
-          for (let i=0;i<hrefArrayTemp.length;i++) {
-            if (hrefArrayTemp[i].href)
-              hrefArray.push(hrefArrayTemp[i].href);
-          }
-
-          let reqURLArrayTemp = document.querySelectorAll("img, embed, video, audio, source");
-          for (let i=0;i<reqURLArrayTemp.length;i++) {
-            if (reqURLArrayTemp[i].src)
-              reqURLArray.push(reqURLArrayTemp[i].src);
-          }
-
-
-          let formArrayTemp = document.querySelectorAll("form");
-          let formObject = {hasForm:false};
-          if(formArrayTemp && formArrayTemp.length > 0) {
-            formObject.hasForm = true;
-
-            for (let i = 0; i < formArrayTemp.length; i++) {
-
-              if (formArrayTemp[i].action)
-                formArray.push(formArrayTemp[i].action);
-            }
-            formObject.actionArray = formArray;
-          }
-
-          let iFrameArrayTemp = document.querySelectorAll("iframe");
-          for (let i=0;i<iFrameArrayTemp.length;i++) {
-            if (iFrameArrayTemp[i].src)
-              iFrameArray.push(iFrameArrayTemp[i].src);
-          }
-
-
-          let inputTextArrayTemp = document.querySelectorAll("input[type='password'], input[type='text']," +
-            " input[type='email'], input[type='tel']");
-          for (let i=0;i<inputTextArrayTemp.length;i++) {
-            if (inputTextArrayTemp[i])
-              inputTextArray.push(inputTextArrayTemp[i].type);
-          }
-
-          return {
-            "hrefArray": hrefArray,
-            "reqURLArray": reqURLArray,
-            "linksInTags": linksInTags,
-            "formObject": formObject,
-            "iFrameArray": iFrameArray,
-            "inputTextArray": inputTextArray
-          };
-        })
-        .end()
-        .then(function (result) {
-          callback(null, result);
-        }, function (error) {
-          callback(error, null);
-        });
-    },
-    unshort_url: function(callback) {
-      tall(url)
-        .then(function(unshortenedUrl) {
-          let urlObject = {};
-          urlObject.isShortenedURL = false;
-          let originalUrl = url;
-          urlObject.originalUrl = originalUrl;
-          urlObject.unshortUrl = null;
-
-          if(originalUrl !== unshortenedUrl && validUrl.isUri(unshortenedUrl)) {
-
-           let originalParsedUrl =  urlParser.parse(originalUrl);
-           let unshortenedParsedUrl = urlParser.parse(unshortenedUrl);
-
-           if(originalParsedUrl && unshortenedParsedUrl && originalParsedUrl.hostname && unshortenedParsedUrl.hostname
-           && originalParsedUrl.hostname !== unshortenedParsedUrl.hostname)
-            urlObject.isShortenedURL = true;
-            urlObject.unshortUrl = unshortenedUrl;
-          }
-
-          console.log('Tall url', unshortenedUrl);
-          console.log('Original url', originalUrl);
-
-          callback(null, urlObject);
-        })
-        .catch(function(err) {
-          callback(err, null);
-        })
-      ;
-    },*/
     parse_url: function(callback) {
       let myUrl = null;
       if(finalURL && (validUrl.isHttpUri(finalURL.finalUrl) || validUrl.isHttpsUri(finalURL.finalUrl)))
@@ -1614,13 +1470,7 @@ export function scanURLAndExtractFeatures(scan, cb){
       }
     }
     else{
-    /*  if(err && err.isOnline === false){
-        let result = {message: SCAN_ERROR_MESSAGES.WEBSITE_NOT_ACCESSIBLE};
-        return cb(null, result);
-      }
-      else {*/
         return cb(err, "An error has occurred in scanURLAndExtractFeatures function!");
-      /*}*/
     }
 
   });
