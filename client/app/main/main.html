@@ -8,8 +8,8 @@
   </div>
 </header>
 
-<div class="container">
-  <div ng-if="vm.isAuthenticated()">
+<div ng-if="vm.isAuthenticated()" class="container">
+  <div >
     <div class="row">
       <div class="col-lg-12">
         <form class="form-horizontal marginTop15">
@@ -28,8 +28,61 @@
       </div>
     </div>
   </div>
-
   <div class="row">
+    <div class="col-lg-11">
+      Phishing Website Detection Feature:
+    </div>
+    <div class="col-lg-1">
+      Value:
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12">
+      FINAL SCORE: {{vm.scanResults.finalScore}}
+      <span class="badge badge-pill badge-success">Success</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12">
+      <ul class="list-group">
+        <li ng-repeat="rule in vm.scanResults.rules" class="list-group-item d-flex justify-content-between align-items-center">
+          {{rule.name}}
+          <span ng-if="vm.scanResults.statistics[rule.code].count >= -2"
+                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+             <span ng-if="vm.scanResults.statistics[rule.code].count === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
+             <span ng-if="vm.scanResults.statistics[rule.code].count !== -2">{{vm.scanResults.statistics[rule.code].count}}</span>
+          </span>
+          <span ng-if="vm.scanResults.statistics[rule.code].days >= -2"
+                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+
+             <span ng-if="vm.scanResults.statistics[rule.code].days === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
+             <span ng-if="vm.scanResults.statistics[rule.code].days !== -2">{{vm.scanResults.statistics[rule.code].days}} &nbsp; days</span>
+          </span>
+          <span ng-if="vm.scanResults.statistics[rule.code].percentage >= 0"
+                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+            {{vm.scanResults.statistics[rule.code].percentage}} %
+          </span>
+          <span ng-if="vm.scanResults.statistics[rule.code].rank >= -2"
+                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+            <span ng-if="vm.scanResults.statistics[rule.code].rank === -2"> No rank</span>
+            <span ng-if="vm.scanResults.statistics[rule.code].rank !== -2">{{vm.scanResults.statistics[rule.code].rank}} &nbsp; rank</span>
+          </span>
+          <span  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+            {{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}
+          </span>
+        </li>
+        <!--<li class="list-group-item d-flex justify-content-between align-items-center">
+          Dapibus ac facilisis in
+          <span class="badge badge-primary badge-pill">2</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Morbi leo risus
+          <span class="badge badge-primary badge-pill">1</span>
+        </li>-->
+      </ul>
+    </div>
+  </div>
+<!--  <div class="row">
     <div class="col-lg-12">
       <h1 class="page-header">Features:</h1>
 
@@ -49,7 +102,7 @@
       </ul>
 
     </div>
-  </div>
+  </div>-->
 </div>
 
 <footer></footer>
