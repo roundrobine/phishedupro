@@ -80,7 +80,7 @@ Rule.find({}).removeAsync()
       'including the extent of the trust certificate issuer, and the certificate age. ' +
       'Certificate Authorities that are consistently listed among the top trustworthy names include: ' +
       '“GeoTrust, GoDaddy, Network Solutions, Thawte, Comodo, Doster and VeriSign”. ' +
-      'Furthermore, by testing out our datasets, we find that the minimum age of a reputable certificate is one year.',
+      'Furthermore, by testing out our datasets, we find that the minimum age of a reputable certificate is more than 6 months.',
       phishing: 181,
       active: true
     },{
