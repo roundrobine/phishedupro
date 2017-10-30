@@ -65,3 +65,30 @@
 .badge-inverse:hover {
   background-color: #1a1a1a;
 }
+
+/*progress bar CSS*/
+
+.progress {
+  margin-bottom: 0px;
+}
+
+.progress-bar{
+  font-size: 14px;
+}
+
+.progress-bar-very-legitimate {
+  background-color: #356635;
+}
+
+.progress-bar-fair {
+  background-color: #FFE87C;
+}
+
+.phishing-class-label{
+  font-size: 60%;
+}
+
+.panel-body-wrap  {
+  word-wrap: break-word;
+}
+

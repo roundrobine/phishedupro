@@ -8,101 +8,133 @@
   </div>
 </header>
 
-<div ng-if="vm.isAuthenticated()" class="container">
-  <div >
-    <div class="row">
-      <div class="col-lg-12">
-        <form class="form-horizontal marginTop15">
-          <div class="form-group">
-            <div class="col-md-9">
-              <input type="text" class="form-control " placeholder="Check website" ng-model="vm.scan.url">
-            </div>
-            <div class="col-md-1">
-              <input type="text" class="form-control " placeholder="Target" ng-model="vm.scan.target">
-            </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-primary" ng-click="vm.scanUrl()">Scan</button>
-            </div>
+<div  class="container" ng-if="vm.isAuthenticated()">
+  <div class="row">
+    <div class="col-lg-12">
+      <form class="form-horizontal marginTop15">
+        <div class="form-group">
+          <div class="col-sm-9">
+            <input type="text" class="form-control " placeholder="Check website" ng-model="vm.scan.url">
           </div>
-        </form>
+          <div class="col-sm-1">
+            <input type="text" class="form-control " placeholder="Target" ng-model="vm.scan.target">
+          </div>
+          <div class="col-sm-2">
+            <button type="button" class="btn btn-primary" ng-click="vm.scanUrl()">Scan</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-5">
+      <div class = "panel panel-primary">
+        <div class = "panel-heading">General Website Scan Results</div>
+
+        <div class = "panel-body">
+          <p>General scan results of the web page</p>
+        </div>
+
+        <ul ng-if="vm.scanResults" class = "list-group">
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-5">Final Score: <span ng-class="(vm.applyProgressBarColor(vm.scanResults.finalScore)).cssClass"
+                                                       class = "label phishing-class-label">
+                {{(vm.applyProgressBarColor(vm.scanResults.finalScore)).label}}</span>
+              </div>
+              <div class = "col-sm-7">
+                <div class="progress progress-striped active">
+                  <div ng-class="(vm.applyProgressBarColor(vm.scanResults.finalScore)).cssClass" class = "progress-bar" role = "progressbar"
+                       aria-valuenow = "60" aria-valuemin = "0" aria-valuemax = "100" style = "width: {{vm.scanResults.finalScore}}%;">
+                    {{vm.scanResults.finalScore}}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-5">Final Score (2 class):</div>
+              <div class = "col-sm-7">
+                <span ng-if="vm.scanResults.finalScore < 51" class = "label label-success">Legitimate web page</span>
+                <span ng-if="vm.scanResults.finalScore > 50" class = "label label-danger">Phishing web page</span>
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-5">Scan Date:</div>
+              <div class = "col-sm-7">
+                {{vm.formatDate(vm.scanResults.scanDate)}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-5">Scan Time:</div>
+              <div class = "col-sm-7">
+                {{vm.scanResults.responseTime}} seconds
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-5">Blacklisted:</div>
+              <div class = "col-sm-7">
+                {{vm.scanResults.isBlacklisted}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-5">Landing Url:</div>
+              <div class = "col-sm-7">
+                <span class="phishing-class-label panel-body-wrap">{{vm.scanResults.url}}</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-sm-7">
+      <div class = "panel panel-primary">
+        <div class ="panel-heading">Phishing Websites Features</div>
+
+        <div class = "panel-body">
+          <p>List results of each website phising detection feature</p>
+        </div>
+        <ul class="list-group">
+          <li ng-repeat="rule in vm.scanResults.rules" class="list-group-item d-flex justify-content-between align-items-center">
+            {{rule.name}}
+            <span ng-if="vm.scanResults.statistics[rule.code].count >= -2"
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+               <span ng-if="vm.scanResults.statistics[rule.code].count === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
+               <span ng-if="vm.scanResults.statistics[rule.code].count !== -2">{{vm.scanResults.statistics[rule.code].count}}</span>
+            </span>
+            <span ng-if="vm.scanResults.statistics[rule.code].days >= -2"
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+
+               <span ng-if="vm.scanResults.statistics[rule.code].days === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
+               <span ng-if="vm.scanResults.statistics[rule.code].days !== -2">{{vm.scanResults.statistics[rule.code].days}} &nbsp; days</span>
+            </span>
+            <span ng-if="vm.scanResults.statistics[rule.code].percentage >= 0"
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+              {{vm.scanResults.statistics[rule.code].percentage}} %
+            </span>
+            <span ng-if="vm.scanResults.statistics[rule.code].rank >= -2"
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+              <span ng-if="vm.scanResults.statistics[rule.code].rank === -2"> No rank</span>
+              <span ng-if="vm.scanResults.statistics[rule.code].rank !== -2">{{vm.scanResults.statistics[rule.code].rank}} &nbsp; rank</span>
+            </span>
+            <span  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+              {{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}
+            </span>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
-  <div class="row">
-    <div class="col-lg-11">
-      Phishing Website Detection Feature:
-    </div>
-    <div class="col-lg-1">
-      Value:
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-lg-12">
-      FINAL SCORE: {{vm.scanResults.finalScore}}
-      <span class="badge badge-pill badge-success">Success</span>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-lg-12">
-      <ul class="list-group">
-        <li ng-repeat="rule in vm.scanResults.rules" class="list-group-item d-flex justify-content-between align-items-center">
-          {{rule.name}}
-          <span ng-if="vm.scanResults.statistics[rule.code].count >= -2"
-                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
-             <span ng-if="vm.scanResults.statistics[rule.code].count === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
-             <span ng-if="vm.scanResults.statistics[rule.code].count !== -2">{{vm.scanResults.statistics[rule.code].count}}</span>
-          </span>
-          <span ng-if="vm.scanResults.statistics[rule.code].days >= -2"
-                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
-
-             <span ng-if="vm.scanResults.statistics[rule.code].days === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
-             <span ng-if="vm.scanResults.statistics[rule.code].days !== -2">{{vm.scanResults.statistics[rule.code].days}} &nbsp; days</span>
-          </span>
-          <span ng-if="vm.scanResults.statistics[rule.code].percentage >= 0"
-                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
-            {{vm.scanResults.statistics[rule.code].percentage}} %
-          </span>
-          <span ng-if="vm.scanResults.statistics[rule.code].rank >= -2"
-                ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
-            <span ng-if="vm.scanResults.statistics[rule.code].rank === -2"> No rank</span>
-            <span ng-if="vm.scanResults.statistics[rule.code].rank !== -2">{{vm.scanResults.statistics[rule.code].rank}} &nbsp; rank</span>
-          </span>
-          <span  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
-            {{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}
-          </span>
-        </li>
-        <!--<li class="list-group-item d-flex justify-content-between align-items-center">
-          Dapibus ac facilisis in
-          <span class="badge badge-primary badge-pill">2</span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          Morbi leo risus
-          <span class="badge badge-primary badge-pill">1</span>
-        </li>-->
-      </ul>
-    </div>
-  </div>
-<!--  <div class="row">
-    <div class="col-lg-12">
-      <h1 class="page-header">Features:</h1>
-
-      <ul class="list-group">
-        <li class="list-group-item">SSL connection (HTTPS) and certificate signing and expiration date</li>
-        <li class="list-group-item">The length of the URL</li>
-        <li class="list-group-item">Number of dots within URL</li>
-        <li class="list-group-item">Number of slashes within URL</li>
-        <li class="list-group-item">Existence of @ symbol or not</li>
-        <li class="list-group-item">Number of TLD and out of TLD position</li>
-        <li class="list-group-item">Presence of Hexadecimal or IP address within the URL or not</li>
-        <li class="list-group-item">Age of Domain: This feature can be extracted from WHOIS database</li>
-        <li class="list-group-item">Alexa Ranking of the website</li>
-        <li class="list-group-item">Check if exisit vlid DNS record for the requested website</li>
-        <li class="list-group-item">URL similarity check with most popular google search results - Levenstine algorithm</li>
-        <li class="list-group-item">Special Character: IF a URL contains any of this characters such as dash (-), underscore (_), comma (,), and semicolon (;)</li>
-      </ul>
-
-    </div>
-  </div>-->
+</div>
 </div>
 
 <footer></footer>
