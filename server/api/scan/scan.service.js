@@ -6,6 +6,7 @@ import _ from 'lodash';
 const MY_WOT = require('./scan.config').MY_WOT;
 const MOZCAPE = require('./scan.config').MOZCAPE;
 const TOP_PHISHING_DOMAINS = require('./scan.config').TOP_PHISHING_DOMAINS;
+const TOP_PHISHING_SUB_DOMAINS = require('./scan.config').TOP_PHISHING_SUB_DOMAINS;
 const TOP_PHISHING_IP_ADDRESSES = require('./scan.config').TOP_PHISHING_IP_ADDRESSES;
 const TOP_PHISHING_KEYWORDS = require('./scan.config').TOP_PHISHING_KEYWORDS;
 const WHITELISTED_DOMAINS = require('./scan.config').WHITELISTED_DOMAINS;
@@ -40,6 +41,7 @@ const WHOIS_DATE_FORMAT = "YYYY-MM-DD HH:mm:ss Z";
 const GOOGLE_ANALYTICS = "google-analytics.com";
 const GOOGLE_APIS = "googleapis.com";
 const GOOGLE = "google";
+const GOOGLE_SYNDICATION = "googlesyndication.com";
 const GRAVATAR = "gravatar.com";
 const LINKS_IN_TAGS = "linksInTags";
 const REQUEST_URLS = "requestUrl";
@@ -54,7 +56,7 @@ function count(url, character) {
 
 function removeWWWSubdomainFromURL(url){
   if(url && url.length > 2 && url.substring(0,3).toLowerCase() === WWW)
-    return url.substring(3);
+    return url.substring(4);
   return url;
 }
 
@@ -299,8 +301,14 @@ export function generatePhishingFeatureSet(scanResults, cb){
                     scanStatistics.ssl.value = PHISHING_CLASS.legitimate;
                 }
                 else if (scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
-                && scanStatistics.ssl.completeCertChain && !scanResults.urlStatisitcs.topPhishingDomain){
+                && scanStatistics.ssl.completeCertChain && !scanResults.urlStatisitcs.topPhishingDomain && !scanResults.urlStatisitcs.topPhishingSubDomain
+                && !scanResults.urlStatisitcs.topPhishingIP){
                   scanStatistics.ssl.value = PHISHING_CLASS.legitimate;
+                }
+                else if(scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
+                  && scanStatistics.ssl.completeCertChain && scanResults.urlStatisitcs.topPhishingSubDomain){
+                  scanStatistics.ssl.value = PHISHING_CLASS.phishing;
+                  urlScore = urlScore + (rules[i].weight);
                 }
                 else if(!scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1){
                   scanStatistics.ssl.value = PHISHING_CLASS.suspicious;
@@ -308,6 +316,11 @@ export function generatePhishingFeatureSet(scanResults, cb){
                 }
                 else if(scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
                   && scanStatistics.ssl.completeCertChain && scanResults.urlStatisitcs.topPhishingDomain){
+                  scanStatistics.ssl.value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight /2);
+                }
+                else if(scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration >= rules[i].phishing && scanStatistics.ssl.expiresIn > -1
+                  && scanStatistics.ssl.completeCertChain && scanResults.urlStatisitcs.topPhishingIP){
                   scanStatistics.ssl.value = PHISHING_CLASS.suspicious;
                   urlScore = urlScore + (rules[i].weight /2);
                 }
@@ -524,7 +537,7 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
         urlOfAnchor.validLinksArray.push(nextUrl.href);
       }
       else if(linkType && newHostNoSubdomain && onlyNewDomainHost &&
-        (newHostNoSubdomain === GOOGLE_ANALYTICS || newHostNoSubdomain === GOOGLE_APIS
+        (newHostNoSubdomain === GOOGLE_ANALYTICS || newHostNoSubdomain === GOOGLE_APIS || newHostNoSubdomain === GOOGLE_SYNDICATION
           || onlyNewDomainHost === GOOGLE || newHostNoSubdomain === GRAVATAR) ){
         validLinks = validLinks + 1;
         urlOfAnchor.validLinksArray.push(nextUrl.href);
@@ -700,6 +713,8 @@ function extractValuablePhishingAttributesFromApiResults(results){
         scanModel.urlStatisitcs = {
           topPhishingDomain: false,
           topPhishingDomainValue: "",
+          topPhishingSubDomain: false,
+          topPhishingSubDomainValue: "",
           topPhishingIP: false,
           topPhishingIPValue: "",
           topPhishingKeyword: false,
@@ -712,13 +727,16 @@ function extractValuablePhishingAttributesFromApiResults(results){
 
         let target = null;
         let targetWithPath = null;
+        let targetHostname = null;
 
         if(results.parse_url.hostname){
 
           targetWithPath = results.parse_url.hostname;
+          targetHostname = results.parse_url.hostname;
 
           if(results.parse_url.tokenizeHost){
             target = results.parse_url.tokenizeHost.domain + "." + results.parse_url.tokenizeHost.tld;
+            targetHostname = removeWWWSubdomainFromURL(targetHostname);
           }
           else{
             target = results.parse_url.hostname;
@@ -738,9 +756,11 @@ function extractValuablePhishingAttributesFromApiResults(results){
             return url === target
           });
 
-          scanModel.urlStatisitcs.whitelistedDomain = _.some(WHITELISTED_DOMAINS, function (urlWhitelisted) {
-            return urlWhitelisted === target
+          scanModel.urlStatisitcs.topPhishingSubDomain = _.some(TOP_PHISHING_SUB_DOMAINS, function (url) {
+            console.log("TARGET HOSTNAME: ", targetHostname);
+            return url === targetHostname
           });
+
 
           if(results.parse_url.ipAddress) {
             scanModel.urlStatisitcs.topPhishingIP = _.some(TOP_PHISHING_IP_ADDRESSES, function (ip) {
@@ -752,18 +772,29 @@ function extractValuablePhishingAttributesFromApiResults(results){
             scanModel.urlStatisitcs.topPhishingDomainValue = target;
           }
 
+          if(scanModel.urlStatisitcs.topPhishingSubDomain){
+            scanModel.urlStatisitcs.topPhishingSubDomainValue = targetHostname;
+          }
+
           if(scanModel.urlStatisitcs.topPhishingIP){
             scanModel.urlStatisitcs.topPhishingIPValue = target;
+          }
+
+          if(!scanModel.urlStatisitcs.topPhishingSubDomain && !scanModel.urlStatisitcs.topPhishingIP && !scanModel.urlStatisitcs.topPhishingDomain){
+            scanModel.urlStatisitcs.whitelistedDomain = _.some(WHITELISTED_DOMAINS, function (urlWhitelisted) {
+              return urlWhitelisted === target
+            });
           }
 
           if(scanModel.urlStatisitcs.whitelistedDomain){
             scanModel.urlStatisitcs.whitelistedDomainValue = target;
           }
 
-          if(scanModel.urlStatisitcs.topPhishingIP || scanModel.urlStatisitcs.topPhishingDomain || scanModel.urlStatisitcs.topPhishingKeyword){
+          if(scanModel.urlStatisitcs.topPhishingIP || scanModel.urlStatisitcs.topPhishingDomain
+            || scanModel.urlStatisitcs.topPhishingKeyword || scanModel.urlStatisitcs.topPhishingSubDomain){
             scanModel.statistics.keywordDomainReport.value = PHISHING_CLASS.phishing;
           }
-          if(scanModel.urlStatisitcs.whitelistedDomain){
+          if(scanModel.urlStatisitcs.whitelistedDomain && !scanModel.urlStatisitcs.topPhishingSubDomain){
             scanModel.statistics.keywordDomainReport.value = PHISHING_CLASS.legitimate;
           }
 
@@ -1195,7 +1226,7 @@ export function checkURL(scan,cb){
       console.log('it enters');
       nightmare
         .goto(scan.url)
-        .wait(1899)
+        .wait(2051)
         .evaluate(function () {
           let hrefArray = [];
           let reqURLArray = [];
@@ -1370,6 +1401,7 @@ export function scanURLAndExtractFeatures(scan, cb){
         myUrl.hasSubdomain = false;
         if (myUrl.tokenizeHost) {
           let filteredSubdomain = removeWWWSubdomainFromURL(myUrl.tokenizeHost.subdomain);
+          console.log("FILTERED DOMAIN: ", filteredSubdomain);
           myUrl.dotsInSubdomainCout = count(filteredSubdomain, DOT_CHARACTER);
           if (filteredSubdomain)
             myUrl.hasSubdomain = true;
