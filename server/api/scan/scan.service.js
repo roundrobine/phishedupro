@@ -32,6 +32,8 @@ const HTTPS = 'https:';
 const JAVA_SCRIPT_VOID_0 = "javascript:void(0)";
 const ABOUT_BLANK = "about:blank";
 const HASH = "#";
+const CONTENT_HASH = "#content";
+const SKIP_HASH = "#skip";
 const INPUT_TYPE_TEXT = "text";
 const INPUT_TYPE_PASSWORD = "password";
 const INPUT_TYPE_EMAIL = "email";
@@ -519,9 +521,19 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
 
       if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
 
-        if (nextUrl.path === parsedUrl.path) {
-          invalidLinks = invalidLinks + 1;
-          urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+        if (nextUrl.path === parsedUrl.path && !nextUrl.hash) {
+          validLinks = validLinks + 1;
+          urlOfAnchor.validLinksArray.push(nextUrl.href);
+        }
+        else if(nextUrl.path === parsedUrl.path && nextUrl.hash){
+          if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
+            validLinks = validLinks + 1;
+            urlOfAnchor.validLinksArray.push(nextUrl.href);
+          }
+          else {
+            invalidLinks = invalidLinks + 1;
+            urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+          }
         }
         else {
           validLinks = validLinks + 1;
