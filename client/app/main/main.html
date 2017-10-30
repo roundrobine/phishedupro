@@ -63,6 +63,22 @@
           </li>
           <li class = "list-group-item">
             <div class="row">
+              <div class="col-sm-5">Total Rules Score:</div>
+              <div class = "col-sm-7">
+                {{vm.scanResults.totalRulesScore}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-5">Phishing Raw Score:</div>
+              <div class = "col-sm-7">
+                {{vm.scanResults.urlScore}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
               <div class="col-sm-5">Scan Date:</div>
               <div class = "col-sm-7">
                 {{vm.formatDate(vm.scanResults.scanDate)}}
