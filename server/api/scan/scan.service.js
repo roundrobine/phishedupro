@@ -1038,6 +1038,63 @@ function extractValuablePhishingAttributesFromApiResults(results){
     }
 }
 
+function calculateEvaluationMetrics(aggregatedStatistics){
+  let evaluationMetrics ={};
+
+  if(aggregatedStatistics){
+
+    aggregatedStatistics.forEach(function(element){
+      if(element._id.target === PHISHING_CLASS.phishing){
+        evaluationMetrics.phishingWebsitesCount = element.totalCountPerClass;
+        evaluationMetrics.phishingWebsitesResponseTime = element.responseTime;
+        evaluationMetrics.correctlyClassifiedPhishingInstances = element.finalScoreAbove50;
+        evaluationMetrics.incorrectlyClassifiedPhishingInstances = element.finalScoreBelowOrEqual50;
+      }
+      else if(element._id.target === PHISHING_CLASS.legitimate){
+        evaluationMetrics.legitimateWebsitesCount = element.totalCountPerClass;
+        evaluationMetrics.legitimateWebsitesResponseTime = element.responseTime;
+        evaluationMetrics.correctlyClassifiedLegitimateInstances = element.finalScoreBelowOrEqual50;
+        evaluationMetrics.incorectlyClassifiedLegitimateInstances = element.finalScoreAbove50;
+      }
+    });
+
+    evaluationMetrics.totalCount = evaluationMetrics.phishingWebsitesCount + evaluationMetrics.legitimateWebsitesCount;
+
+    evaluationMetrics.truePositiveRate = evaluationMetrics.correctlyClassifiedPhishingInstances /
+      (evaluationMetrics.correctlyClassifiedPhishingInstances + evaluationMetrics.incorrectlyClassifiedPhishingInstances);
+
+    evaluationMetrics.truePositiveRatePrc = Math.round((evaluationMetrics.truePositiveRate * 100) * 100) / 100;
+
+    evaluationMetrics.falsePositiveRate = evaluationMetrics.incorectlyClassifiedLegitimateInstances /
+      (evaluationMetrics.incorectlyClassifiedLegitimateInstances + evaluationMetrics.correctlyClassifiedLegitimateInstances);
+
+    evaluationMetrics.falsePositiveRatePrc = Math.round((evaluationMetrics.falsePositiveRate * 100) * 100) / 100;
+
+    evaluationMetrics.trueNegativeRate = evaluationMetrics.correctlyClassifiedLegitimateInstances /
+      (evaluationMetrics.correctlyClassifiedLegitimateInstances + evaluationMetrics.incorectlyClassifiedLegitimateInstances);
+
+    evaluationMetrics.trueNegativeRatePrc = Math.round((evaluationMetrics.trueNegativeRate * 100) * 100) / 100;
+
+    evaluationMetrics.falseNegativeRate = evaluationMetrics.incorrectlyClassifiedPhishingInstances /
+      (evaluationMetrics.correctlyClassifiedPhishingInstances + evaluationMetrics.incorrectlyClassifiedPhishingInstances);
+
+    evaluationMetrics.falseNegativeRatePrc = Math.round((evaluationMetrics.falseNegativeRate * 100) * 100) / 100;
+
+    evaluationMetrics.precision = evaluationMetrics.correctlyClassifiedPhishingInstances /
+      (evaluationMetrics.incorectlyClassifiedLegitimateInstances + evaluationMetrics.correctlyClassifiedPhishingInstances );
+
+    evaluationMetrics.precisionPrc = Math.round((evaluationMetrics.precision * 100) * 100) / 100;
+
+    evaluationMetrics.accuracy = (evaluationMetrics.correctlyClassifiedPhishingInstances +  evaluationMetrics.correctlyClassifiedLegitimateInstances)
+      / evaluationMetrics.totalCount;
+
+    evaluationMetrics.accuracyPrc = Math.round((evaluationMetrics.accuracy * 100) * 100) / 100;
+  }
+
+  return evaluationMetrics;
+
+}
+
 function myWOT(url,cb){
 
   var options = {
@@ -1219,6 +1276,42 @@ function googleBlackListLookup(url,cb){
 
 
 }
+
+export function generateStats(cb) {
+  Scan.aggregate([
+    {
+      $match: {
+        target: { $ne: null},
+      }
+    },
+    {
+      $group : {
+        _id : {target:"$target", active:"active"},
+        totalCountPerClass: { $sum: 1 },
+        responseTime: {$avg:"$responseTime"},
+        finalScoreAbove50: { $sum : { $cond : { if : { $gte : [ "$finalScore", 51 ] } ,
+          then : 1,
+          else : 0}}},
+        finalScoreBelowOrEqual50:{ $sum : { $cond : { if : { $lt : [ "$finalScore", 51 ] } ,
+          then : 1,
+          else : 0}}}
+      }},
+    {
+      $project: {
+        "totalCountPerClass":1,
+        "responseTime":1,
+        "finalScoreAbove50":1,
+        "finalScoreBelowOrEqual50": 1
+      }
+    }],function (err, result) {
+    if (!err) {
+      let evaluationMetrics = calculateEvaluationMetrics(result);
+      cb(null, evaluationMetrics);
+    } else {
+      cb(err, null);
+    }
+  })
+};
 
 export function checkURL(scan,cb){
   async.auto({

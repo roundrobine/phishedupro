@@ -150,7 +150,20 @@ export function create(req, res) {
     }
 
   });
+}
 
+export function stats(req, res){
+  ScanService.generateStats(function(err, result){
+    if(err){
+      console.log(err, null);
+      return res.status(500).send(err);
+    }
+    else{
+      console.log(result);
+      return res.status(200).json(result);
+    }
+    }
+  )
 }
 
 // Updates an existing Scan in the DB
