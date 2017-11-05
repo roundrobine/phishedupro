@@ -1060,35 +1060,52 @@ function calculateEvaluationMetrics(aggregatedStatistics){
 
     evaluationMetrics.totalCount = evaluationMetrics.phishingWebsitesCount + evaluationMetrics.legitimateWebsitesCount;
 
-    evaluationMetrics.truePositiveRate = evaluationMetrics.correctlyClassifiedPhishingInstances /
+    let truePositiveRate = evaluationMetrics.correctlyClassifiedPhishingInstances /
       (evaluationMetrics.correctlyClassifiedPhishingInstances + evaluationMetrics.incorrectlyClassifiedPhishingInstances);
+
+    evaluationMetrics.truePositiveRate = Math.round((truePositiveRate * 10000)) / 10000;
 
     evaluationMetrics.truePositiveRatePrc = Math.round((evaluationMetrics.truePositiveRate * 100) * 100) / 100;
 
-    evaluationMetrics.falsePositiveRate = evaluationMetrics.incorectlyClassifiedLegitimateInstances /
+    let falsePositiveRate = evaluationMetrics.incorectlyClassifiedLegitimateInstances /
       (evaluationMetrics.incorectlyClassifiedLegitimateInstances + evaluationMetrics.correctlyClassifiedLegitimateInstances);
+
+    evaluationMetrics.falsePositiveRate = Math.round((falsePositiveRate * 10000)) / 10000;
 
     evaluationMetrics.falsePositiveRatePrc = Math.round((evaluationMetrics.falsePositiveRate * 100) * 100) / 100;
 
-    evaluationMetrics.trueNegativeRate = evaluationMetrics.correctlyClassifiedLegitimateInstances /
+    let trueNegativeRate = evaluationMetrics.correctlyClassifiedLegitimateInstances /
       (evaluationMetrics.correctlyClassifiedLegitimateInstances + evaluationMetrics.incorectlyClassifiedLegitimateInstances);
+
+    evaluationMetrics.trueNegativeRate = Math.round((trueNegativeRate * 10000)) / 10000;
 
     evaluationMetrics.trueNegativeRatePrc = Math.round((evaluationMetrics.trueNegativeRate * 100) * 100) / 100;
 
-    evaluationMetrics.falseNegativeRate = evaluationMetrics.incorrectlyClassifiedPhishingInstances /
+    let falseNegativeRate = evaluationMetrics.incorrectlyClassifiedPhishingInstances /
       (evaluationMetrics.correctlyClassifiedPhishingInstances + evaluationMetrics.incorrectlyClassifiedPhishingInstances);
+
+    evaluationMetrics.falseNegativeRate = Math.round((falseNegativeRate * 10000)) / 10000;
 
     evaluationMetrics.falseNegativeRatePrc = Math.round((evaluationMetrics.falseNegativeRate * 100) * 100) / 100;
 
-    evaluationMetrics.precision = evaluationMetrics.correctlyClassifiedPhishingInstances /
+    let precision = evaluationMetrics.correctlyClassifiedPhishingInstances /
       (evaluationMetrics.incorectlyClassifiedLegitimateInstances + evaluationMetrics.correctlyClassifiedPhishingInstances );
+
+    evaluationMetrics.precision = Math.round((precision * 10000)) / 10000;
 
     evaluationMetrics.precisionPrc = Math.round((evaluationMetrics.precision * 100) * 100) / 100;
 
-    evaluationMetrics.accuracy = (evaluationMetrics.correctlyClassifiedPhishingInstances +  evaluationMetrics.correctlyClassifiedLegitimateInstances)
+    let accuracy = (evaluationMetrics.correctlyClassifiedPhishingInstances +  evaluationMetrics.correctlyClassifiedLegitimateInstances)
       / evaluationMetrics.totalCount;
 
+    evaluationMetrics.accuracy = Math.round((accuracy * 10000)) / 10000;
+
     evaluationMetrics.accuracyPrc = Math.round((evaluationMetrics.accuracy * 100) * 100) / 100;
+
+    let harmonicMean = (2 * evaluationMetrics.truePositiveRate * evaluationMetrics.precision) /
+      (evaluationMetrics.truePositiveRate + evaluationMetrics.precision);
+
+    evaluationMetrics.harmonicMean = Math.round((harmonicMean * 10000)) / 10000;
   }
 
   return evaluationMetrics;
