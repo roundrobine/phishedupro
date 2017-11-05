@@ -125,7 +125,7 @@
             <span ng-if="vm.scanResults.statistics[rule.code].count >= -2"
                   ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
                <span ng-if="vm.scanResults.statistics[rule.code].count === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
-               <span ng-if="vm.scanResults.statistics[rule.code].count !== -2">{{vm.scanResults.statistics[rule.code].count}}</span>
+               <span ng-if="vm.scanResults.statistics[rule.code].count !== -2">{{vm.scanResults.statistics[rule.code].count | number : 2}}</span>
             </span>
             <span ng-if="vm.scanResults.statistics[rule.code].days >= -2"
                   ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">

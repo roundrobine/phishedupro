@@ -1,1 +1,220 @@
-<div>This is the statistics view.</div>
+<navbar></navbar>
+
+<div  class="container" ng-if="vm.isAuthenticated()">
+  <div class="row">
+    <div class="col-sm-5">
+      <div class = "panel panel-primary">
+        <div class = "panel-heading">PhishEduPro scan statistics and evaluation metrics</div>
+        <ul ng-if="vm.statistics" class = "list-group">
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Scan time (Legitimate Urls):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.legitimateWebsitesResponseTime | number : 2}}s
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Scan time (Phishing Urls):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.phishingWebsitesResponseTime | number : 2}}s
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Total number of urls:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.totalCount}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Total number of legitimate urls:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.legitimateWebsitesCount}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Total number of phishing urls:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.phishingWebsitesCount}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Correctly Classified Legitimate Instances:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.correctlyClassifiedLegitimateInstances}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Incorrectly Classified Legitimate Instances:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.incorectlyClassifiedLegitimateInstances}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Correctly Classified Phishing Instances:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.correctlyClassifiedPhishingInstances}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Incorrectly Classified Phishing Instances:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.incorrectlyClassifiedPhishingInstances}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">True Positive Rate (TP):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.truePositiveRate | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">TP Percentage:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.truePositiveRatePrc | number : 2}}%
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-sm-5">
+      <div class = "panel panel-primary">
+        <div class = "panel-heading">PhishEduPro scan statistics and evaluation metrics (cont...)</div>
+        <ul ng-if="vm.statistics" class = "list-group">
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">True Negative Rate (TN):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.trueNegativeRate | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">TN Percentage:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.trueNegativeRatePrc | number : 2}}%
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">False Positive Rate (FP):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.falsePositiveRate | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">FP Percentage:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.falsePositiveRatePrc | number : 2}}%
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">False Negative Rate (FN):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.falseNegativeRate | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">FN Percentage:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.falseNegativeRatePrc | number : 2}}%
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Recall (R):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.truePositiveRate | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Precision (P):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.precision | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Harmonic Mean (F1):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.harmonicMean | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">Accuracy (ACC):
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.accuracy | number : 4}}
+              </div>
+            </div>
+          </li>
+          <li class = "list-group-item">
+            <div class="row">
+              <div class="col-sm-10">ACC Percentage:
+              </div>
+              <div class = "col-sm-2">
+                {{vm.statistics.accuracyPrc | number : 2}}%
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer></footer>

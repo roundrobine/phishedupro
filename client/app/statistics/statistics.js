@@ -6,6 +6,7 @@ angular.module('phisheduproApp')
       .state('statistics', {
         url: '/statistics',
         templateUrl: 'app/statistics/statistics.html',
-        controller: 'StatisticsCtrl'
+        controller: 'StatisticsCtrl',
+        controllerAs: 'vm',
       });
   });

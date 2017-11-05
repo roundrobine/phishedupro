@@ -5,8 +5,15 @@
 (function() {
   var urlScanFactory = function($resource) {
 
-    return $resource('/scan/:id', {
+    return $resource('/scan/:controller/:id', {
       id: '@id'
+    }, {
+      stats: {
+        method:'GET',
+        params: {
+          controller:'stats'
+        }
+      }
     });
   };
 
