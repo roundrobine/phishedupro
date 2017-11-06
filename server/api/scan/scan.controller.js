@@ -52,7 +52,7 @@ function handleError(res, statusCode) {
   };
 }
 
-function responseWithResult(res, rules, statusCode) {
+function responseWithResultOnScan(res, rules, statusCode) {
   statusCode = statusCode || 200;
 
   return function(entity) {
@@ -65,6 +65,17 @@ function responseWithResult(res, rules, statusCode) {
     }
   };
 }
+
+
+function responseWithResult(res, statusCode) {
+  statusCode = statusCode || 200;
+  return function(entity) {
+    if (entity) {
+      res.status(statusCode).json(entity);
+    }
+  };
+}
+
 
 function handleEntityNotFound(res) {
   return function(entity) {
@@ -99,9 +110,49 @@ function removeEntity(res) {
 
 // Gets a list of Scans
 export function index(req, res) {
-  Scan.findAsync()
+
+  //Create the query
+  var query = {};
+  if(req.query.search && req.query.search.length > 0){
+    query = {'url':new RegExp(req.query.search, 'i') };
+  }
+
+  //Make sure limit and page are numbers and above 1
+  if(!req.query.limit || parseFloat(req.query.limit) < 1){
+    req.query.limit = 15;
+  }
+  if(!req.query.page || parseFloat(req.query.page) < 1){
+    req.query.page = 1;
+  }
+
+  //Create the offset (ex. page = 1 and limit = 25 would result in 0 offset. page = 2 and limit = 25 would result in 25 offset.)
+  var offset = (req.query.page - 1) * req.query.limit;
+
+  //Testing if offset is bigger then result, if yes set offset to zero
+  Scan.count(query, function(err, count) {
+    if(offset > count){
+      offset = 0;
+    }
+
+    //Create object for pagination query
+    var options = {
+      select: 'url urlScore totalRulesScore active target scanDate finalScore isBlacklisted responseTime statistics owner',
+      sort: "-scanDate",
+      populate: {path: 'owner', select: 'name email'},
+      offset: offset,
+      limit: parseFloat(req.query.limit)
+    };
+
+    //Do the actual pagination
+    Scan.paginate(query, options)
+      .then(responseWithResult(res))
+      .catch(handleError(res));
+  });
+
+
+  /*Scan.findAsync()
     .then(responseWithResult(res))
-    .catch(handleError(res));
+    .catch(handleError(res));*/
 }
 
 // Gets a single Scan from the DB
@@ -142,7 +193,7 @@ export function create(req, res) {
               result.responseTime = responseTime;
               console.log("Request time: ", responseTime);
               Scan.createAsync(result)
-                .then(responseWithResult(res, rules,  201))
+                .then(responseWithResultOnScan(res, rules,  201))
                 .catch(handleError(res));
             });
           }

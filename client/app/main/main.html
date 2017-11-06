@@ -27,15 +27,51 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-sm-5">
+    <div class="col-sm-4">
       <div class = "panel panel-primary">
+        <div class ="panel-heading">Scan Urls Dastabase </div>
+
+        <div class = "panel-body">
+            <div class="row">
+              <div class="col-sm-12">
+                <input ng-model="vm.search.value"
+                     ng-model-options='{ debounce: 500 }'
+                     class="form-control" id="searchText"
+                     placeholder="Search for url">
+              </div>
+            </div>
+        </div>
+
+        <ul class="list-group">
+          <li dir-paginate="scan in vm.scansList | itemsPerPage: vm.urlsPerPage" total-items="vm.totalUrls" current-page="vm.pagination.current" class = "scan-element list-group-item">
+            <div class="row cursor-pointer" ng-click="vm.showDetails(scan)">
+              <div class = "col-sm-7 phishing-class-label">
+                {{scan.url |limitTo : 35}}
+              </div>
+              <div class="col-sm-5"><span ng-class="(vm.applyProgressBarColor(scan.finalScore)).cssClass"
+                                                       class = "label phishing-class-label">
+                {{(vm.applyProgressBarColor(scan.finalScore)).label}}&nbsp {{scan.finalScore}}%</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <div class="row">
+          <div class = "col-sm-10 col-sm-offset-1">
+            <dir-pagination-controls on-page-change="vm.pageChanged(newPageNumber)" max-size="6"></dir-pagination-controls>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class = "panel panel-info">
         <div class = "panel-heading">General Website Scan Results</div>
 
         <div class = "panel-body">
-          <p>General scan results of the web page</p>
+          <p class="phishing-class-label">General scan results of the web page</p>
         </div>
 
-        <ul ng-if="vm.scanResults" class = "list-group">
+        <ul ng-if="vm.scanResults" class = "phishing-class-label list-group">
           <li class = "list-group-item">
             <div class="row">
               <div class="col-sm-5">Final Score: <span ng-class="(vm.applyProgressBarColor(vm.scanResults.finalScore)).cssClass"
@@ -105,44 +141,44 @@
             <div class="row">
               <div class="col-sm-5">Landing Url:</div>
               <div class = "col-sm-7">
-                <span class="phishing-class-label panel-body-wrap">{{vm.scanResults.url}}</span>
+                <span class="panel-body-wrap">{{vm.scanResults.url}}</span>
               </div>
             </div>
           </li>
         </ul>
       </div>
     </div>
-    <div class="col-sm-7">
-      <div class = "panel panel-primary">
+    <div class="col-sm-4">
+      <div class = "panel panel-info">
         <div class ="panel-heading">Phishing Websites Features</div>
 
         <div class = "panel-body">
-          <p>List results of each website phising detection feature</p>
+          <p class="phishing-class-label">List results of each website phising detection feature</p>
         </div>
-        <ul class="list-group">
+        <ul class="list-group phishing-class-label">
           <li ng-repeat="rule in vm.scanResults.rules" class="list-group-item d-flex justify-content-between align-items-center">
             {{rule.name}}
             <span ng-if="vm.scanResults.statistics[rule.code].count >= -2"
-                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
                <span ng-if="vm.scanResults.statistics[rule.code].count === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
                <span ng-if="vm.scanResults.statistics[rule.code].count !== -2">{{vm.scanResults.statistics[rule.code].count | number : 2}}</span>
             </span>
             <span ng-if="vm.scanResults.statistics[rule.code].days >= -2"
-                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
 
                <span ng-if="vm.scanResults.statistics[rule.code].days === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
                <span ng-if="vm.scanResults.statistics[rule.code].days !== -2">{{vm.scanResults.statistics[rule.code].days}} &nbsp; days</span>
             </span>
             <span ng-if="vm.scanResults.statistics[rule.code].percentage >= 0"
-                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
               {{vm.scanResults.statistics[rule.code].percentage}} %
             </span>
             <span ng-if="vm.scanResults.statistics[rule.code].rank >= -2"
-                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
               <span ng-if="vm.scanResults.statistics[rule.code].rank === -2"> No rank</span>
               <span ng-if="vm.scanResults.statistics[rule.code].rank !== -2">{{vm.scanResults.statistics[rule.code].rank}} &nbsp; rank</span>
             </span>
-            <span  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill">
+            <span  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
               {{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}
             </span>
           </li>

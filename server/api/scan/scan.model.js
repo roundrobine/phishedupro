@@ -2,6 +2,7 @@
 
 var mongoose = require('bluebird').promisifyAll(require('mongoose'));
 import {Schema} from 'mongoose';
+var mongoosePaginate = require('mongoose-paginate');
 
 var ScanSchema = new mongoose.Schema({
   scanDate: {
@@ -508,5 +509,7 @@ var ScanSchema = new mongoose.Schema({
     default:true
   }
 });
+
+ScanSchema.plugin(mongoosePaginate);
 
 export default mongoose.model('Scan', ScanSchema);

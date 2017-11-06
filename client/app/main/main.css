@@ -66,6 +66,18 @@
   background-color: #1a1a1a;
 }
 
+.scan-element{
+  background-color:#ffffff;
+}
+.scan-element:hover{
+  background-color:#d9edf7;
+  border-color: #bce8f1
+}
+.scan-element:active{
+  background-color:#d9edf7;
+  border-color: #bce8f1
+}
+
 /*progress bar CSS*/
 
 .progress {
@@ -85,7 +97,16 @@
 }
 
 .phishing-class-label{
-  font-size: 60%;
+  font-weight: bold;
+  font-size: 70%;
+}
+
+.phishing-class-label-90{
+  font-weight: bold;
+  font-size: 90%;
+}
+.scan-class-label{
+  font-size: 65%;
 }
 
 .panel-body-wrap  {

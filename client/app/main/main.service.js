@@ -13,6 +13,9 @@
         params: {
           controller:'stats'
         }
+      },
+      paged: {
+        method:'GET'
       }
     });
   };

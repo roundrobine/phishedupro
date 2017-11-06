@@ -1,13 +1,18 @@
 'use strict';
 (function() {
 
-  var MainCtrl = function ($scope, socket, Auth, currentUser, URLScanFactory) {
+  var MainCtrl = function ($scope, socket, Auth, currentUser, URLScanFactory, scans) {
     var vm = this;
     vm.isAuthenticated = Auth.isLoggedIn;
     vm.isAdmin = Auth.isAdmin;
     vm.currentUser = currentUser;
     vm.scan = {url:"", target:null};
     vm.scanResults = null;
+    vm.search = {};
+    vm.totalUrls = 0;
+    vm.urlsPerPage = 10;
+    vm.scansList = null;
+
 
     const PHISHING_CLASS = {
       LEGITIMATE: 1,
@@ -26,7 +31,46 @@
       FAIR: 40,
       VERY_SUSPICIOUS: 50,
       PHISHING: 60
+    };
+
+    function initialSetup(scans){
+      vm.totalUrls = scans.total;
+      vm.scansList = scans.docs;
+      vm.currenPage = 1;
+      //socket.syncUpdates('syllabus', $scope.syllabuses);
+    };
+
+    vm.pagination = {
+      current: 1
+    };
+
+    vm.pageChanged = function(newPage) {
+      getResultsPage(newPage);
+    };
+
+    vm.showDetails = function(scan){
+
+      vm.scanResults = scan;
+    };
+
+
+    function getResultsPage(pageNumber) {
+      if(!vm.scansList){ return;}
+      URLScanFactory.paged(
+        { page: pageNumber,
+          limit: vm.urlsPerPage,
+          search: vm.search.value },
+        function(scans) {
+          vm.totalUrls = scans.total;
+          vm.scansList = scans.docs;
+          vm.currenPage = pageNumber;
+          console.log(vm.scansList[0]);
+        });
     }
+
+    $scope.$watch('vm.search', function() {
+      getResultsPage(1);
+    }, true);
 
 
     vm.scanUrl = function () {
@@ -106,11 +150,18 @@
 
     vm.formatDate = function (date) {
       return moment(date).format("MMMM Do YYYY, h:mm:ss a");
-    }
+    };
+
+    initialSetup(scans);
+
+    $scope.$on('$destroy', function() {
+      //socket.unsyncUpdates('syllabus');
+    });
+
 
   };
 
-  MainCtrl.$inject = ['$scope','socket', 'Auth', 'currentUser', 'URLScanFactory'];
+  MainCtrl.$inject = ['$scope','socket', 'Auth', 'currentUser', 'URLScanFactory', 'scans'];
 
   angular.module('phisheduproApp')
     .controller('MainCtrl', MainCtrl);
