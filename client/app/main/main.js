@@ -17,6 +17,9 @@ angular.module('phisheduproApp')
               { page: 1,
                 limit: 10,
                 sortBy: 'url'}).$promise;
+          },
+          rules: function(RulesService) {
+            return RulesService.query().$promise;
           }
         }
       });

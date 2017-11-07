@@ -42,9 +42,8 @@ angular.module('phisheduproApp')
             array.splice(index, 1, item);
             event = 'updated';
           } else {
-            array.push(item);
+            array.unshift(item);
           }
-
           cb(event, item, array);
         });
 

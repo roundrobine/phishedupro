@@ -43,8 +43,9 @@
         </div>
 
         <ul class="list-group">
-          <li dir-paginate="scan in vm.scansList | itemsPerPage: vm.urlsPerPage" total-items="vm.totalUrls" current-page="vm.pagination.current" class = "scan-element list-group-item">
-            <div class="row cursor-pointer" ng-click="vm.showDetails(scan)">
+          <li dir-paginate="scan in vm.scansList | itemsPerPage: vm.urlsPerPage" total-items="vm.totalUrls"
+              current-page="vm.pagination.current" ng-click="vm.showDetails(scan)" class = "scan-element list-group-item">
+            <div class="row cursor-pointer" >
               <div class = "col-sm-7 phishing-class-label">
                 {{scan.url |limitTo : 35}}
               </div>
@@ -188,6 +189,12 @@
   </div>
 </div>
 </div>
+
+<!--<div class="row">
+  <div ng-repeat="scan in vm.scansList">
+    <p>{{scan.url}}</p>
+  </div>
+</div>-->
 
 <footer></footer>
 

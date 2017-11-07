@@ -287,6 +287,11 @@ export function generatePhishingFeatureSet(scanResults, cb){
                   scanStatistics[rules[i].code].value = PHISHING_CLASS.suspicious;
                   urlScore = urlScore + (rules[i].weight / 2);
                 }
+                else if(scanResults.urlStatisitcs.topPhishingDomain || scanResults.urlStatisitcs.topPhishingSubDomain
+                || scanResults.urlStatisitcs.topPhishingIP){
+                  scanStatistics[rules[i].code].value = PHISHING_CLASS.suspicious;
+                  urlScore = urlScore + (rules[i].weight / 2);
+                }
                 else{
                   scanStatistics[rules[i].code].value = PHISHING_CLASS.legitimate;
                 }
@@ -402,7 +407,7 @@ export function generatePhishingFeatureSet(scanResults, cb){
                 }
                 else if (scanStatistics.websiteTrafficAlexa.rank > rules[i].suspicious ||
                   (scanStatistics.websiteTrafficAlexa.rank > rules[i].phishing && scanStatistics.websiteTrafficAlexa.rank <= rules[i].suspicious
-                    && scanResults.urlStatisitcs.topPhishingDomain)){
+                    && (scanResults.urlStatisitcs.topPhishingDomain || scanResults.urlStatisitcs.topPhishingSubDomain) )){
                   scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.suspicious;
                   urlScore = urlScore + (rules[i].weight / 2);
                 }
@@ -526,14 +531,14 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
           urlOfAnchor.validLinksArray.push(nextUrl.href);
         }
         else if(nextUrl.path === parsedUrl.path && nextUrl.hash){
-          if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
+         /* if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
             validLinks = validLinks + 1;
             urlOfAnchor.validLinksArray.push(nextUrl.href);
           }
-          else {
+          else {*/
             invalidLinks = invalidLinks + 1;
             urlOfAnchor.invalidLinksArray.push(nextUrl.href);
-          }
+         /* }*/
         }
         else {
           validLinks = validLinks + 1;

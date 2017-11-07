@@ -1,7 +1,7 @@
 'use strict';
 (function() {
 
-  var MainCtrl = function ($scope, socket, Auth, currentUser, URLScanFactory, scans) {
+  var MainCtrl = function ($scope, socket, Auth, currentUser, URLScanFactory, scans, rules) {
     var vm = this;
     vm.isAuthenticated = Auth.isLoggedIn;
     vm.isAdmin = Auth.isAdmin;
@@ -12,6 +12,7 @@
     vm.totalUrls = 0;
     vm.urlsPerPage = 10;
     vm.scansList = null;
+    vm.rules = rules;
 
 
     const PHISHING_CLASS = {
@@ -37,7 +38,7 @@
       vm.totalUrls = scans.total;
       vm.scansList = scans.docs;
       vm.currenPage = 1;
-      //socket.syncUpdates('syllabus', $scope.syllabuses);
+      socket.syncUpdates('scan',  vm.scansList);
     };
 
     vm.pagination = {
@@ -49,8 +50,8 @@
     };
 
     vm.showDetails = function(scan){
-
       vm.scanResults = scan;
+      vm.scanResults.rules = vm.rules;
     };
 
 
@@ -64,7 +65,6 @@
           vm.totalUrls = scans.total;
           vm.scansList = scans.docs;
           vm.currenPage = pageNumber;
-          console.log(vm.scansList[0]);
         });
     }
 
@@ -72,12 +72,12 @@
       getResultsPage(1);
     }, true);
 
-
     vm.scanUrl = function () {
       vm.scan.owner = vm.currentUser._id;
       URLScanFactory.save(vm.scan, function (scanReport) {
-        console.log(scanReport);
+        console.log(vm.scansList[0].url);
         vm.scanResults = scanReport;
+        //vm.scansList.unshift(scanReport);
       }, function(error) {
         console.log(error);
       });
@@ -120,6 +120,7 @@
     };
 
     vm.applyProgressBarColor = function (finalScore) {
+
       let phishingClass = {};
       if(finalScore >= PHISHING_CATEGORIES.VERY_LEGITIMATE && finalScore <= PHISHING_CATEGORIES.LEGITIMATE){
         phishingClass.cssClass = "progress-bar-very-legitimate";
@@ -152,16 +153,18 @@
       return moment(date).format("MMMM Do YYYY, h:mm:ss a");
     };
 
+
+
     initialSetup(scans);
 
     $scope.$on('$destroy', function() {
-      //socket.unsyncUpdates('syllabus');
+      socket.unsyncUpdates('scan');
     });
 
 
   };
 
-  MainCtrl.$inject = ['$scope','socket', 'Auth', 'currentUser', 'URLScanFactory', 'scans'];
+  MainCtrl.$inject = ['$scope','socket', 'Auth', 'currentUser', 'URLScanFactory', 'scans', 'rules'];
 
   angular.module('phisheduproApp')
     .controller('MainCtrl', MainCtrl);
