@@ -27,7 +27,7 @@ const validUrl = require('valid-url');
 var moment = require('moment');
 var http = require('http');
 const DOT_CHARACTER = '\\.';
-const WWW = "www"
+const WWW = "www";
 const HTTPS = 'https:';
 const JAVA_SCRIPT_VOID_0 = "javascript:void(0)";
 const ABOUT_BLANK = "about:blank";
@@ -49,7 +49,7 @@ const LINKS_IN_TAGS = "linksInTags";
 const REQUEST_URLS = "requestUrl";
 const ANGULAR_JS_PATH_REGEX = new RegExp("^#!?\\/.*");
 const IDENTICAL_URL_MAX_COUNT = 4;
-const HASH_ANCHOR_URL_MAX_COUNT = 6;
+const HASH_ANCHOR_URL_MAX_COUNT = 5;
 
 var Nightmare = require('nightmare');
 
@@ -221,7 +221,7 @@ function checkUrlExists(url, cb) {
     req.abort();
   });
 
-  req.setTimeout(8000);
+  req.setTimeout(7000);
   req.end();
 }
 
