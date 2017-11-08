@@ -16,14 +16,22 @@
           <div class="col-sm-9">
             <input type="text" class="form-control " placeholder="Check website" ng-model="vm.scan.url">
           </div>
-          <div class="col-sm-1">
-            <input type="text" class="form-control " placeholder="Target" ng-model="vm.scan.target">
-          </div>
           <div class="col-sm-2">
+           <!--<input type="text" class="form-control" placeholder="Target" ng-model="vm.scan.target"> -->
+            <select class="form-control" name="repeatSelect" id="repeatSelect" ng-model="vm.scan.target">
+              <option ng-repeat="target in vm.targetOptions track by target.value" value="{{target.value}}">{{target.name}}</option>
+            </select>
+          </div>
+          <div class="col-sm-1">
             <button type="button" class="btn btn-primary" ng-click="vm.scanUrl()">Scan</button>
           </div>
         </div>
       </form>
+    </div>
+  </div>
+  <div ng-if="vm.scanResults && vm.scanResults.message" class="row">
+    <div class="col-md-12">
+      <div  class="alert alert-danger">{{vm.scanResults.message}}</div>
     </div>
   </div>
   <div class="row">
@@ -44,7 +52,7 @@
 
         <ul class="list-group">
           <li dir-paginate="scan in vm.scansList | itemsPerPage: vm.urlsPerPage" total-items="vm.totalUrls"
-              current-page="vm.pagination.current" ng-click="vm.showDetails(scan)" class = "scan-element list-group-item">
+              ng-class="{'scan-element-selected':$index === vm.selectedRow}" current-page="vm.pagination.current" ng-click="vm.showDetails(scan, $index)" class = "scan-element list-group-item">
             <div class="row cursor-pointer" >
               <div class = "col-sm-7 phishing-class-label">
                 {{scan.url |limitTo : 35}}
@@ -72,7 +80,7 @@
           <p class="phishing-class-label">General scan results of the web page</p>
         </div>
 
-        <ul ng-if="vm.scanResults" class = "phishing-class-label list-group">
+        <ul ng-if="vm.scanResults && !vm.scanResults.message" class = "phishing-class-label list-group">
           <li class = "list-group-item">
             <div class="row">
               <div class="col-sm-5">Final Score: <span ng-class="(vm.applyProgressBarColor(vm.scanResults.finalScore)).cssClass"
@@ -156,7 +164,7 @@
         <div class = "panel-body">
           <p class="phishing-class-label">List results of each website phising detection feature</p>
         </div>
-        <ul class="list-group phishing-class-label">
+        <ul ng-if="vm.scanResults && !vm.scanResults.message" class="list-group phishing-class-label">
           <li ng-repeat="rule in vm.scanResults.rules" class="list-group-item d-flex justify-content-between align-items-center">
             {{rule.name}}
             <span ng-if="vm.scanResults.statistics[rule.code].count >= -2"

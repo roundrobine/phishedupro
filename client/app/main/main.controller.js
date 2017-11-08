@@ -8,6 +8,7 @@
     vm.currentUser = currentUser;
     vm.scan = {url:"", target:null};
     vm.scanResults = null;
+    vm.selectedRow = null;
     vm.search = {};
     vm.totalUrls = 0;
     vm.urlsPerPage = 10;
@@ -34,11 +35,23 @@
       PHISHING: 60
     };
 
+    vm.targetOptions = [
+        {value: '0', name: 'Select Target'},
+        {value: '1', name: 'Legitimate'},
+        {value: '-1', name: 'Phishing'}
+    ];
+
+    vm.scan.target = vm.targetOptions[0].value;
+
+    vm.setClickedRow = function(index){  //function that sets the value of selectedRow to current index
+      vm.selectedRow = index;
+    }
+
     function initialSetup(scans){
       vm.totalUrls = scans.total;
       vm.scansList = scans.docs;
       vm.currenPage = 1;
-      socket.syncUpdates('scan',  vm.scansList);
+      //socket.syncUpdates('scan',  vm.scansList);
     };
 
     vm.pagination = {
@@ -49,9 +62,10 @@
       getResultsPage(newPage);
     };
 
-    vm.showDetails = function(scan){
+    vm.showDetails = function(scan, index){
       vm.scanResults = scan;
       vm.scanResults.rules = vm.rules;
+      vm.setClickedRow(index);
     };
 
 
@@ -65,6 +79,7 @@
           vm.totalUrls = scans.total;
           vm.scansList = scans.docs;
           vm.currenPage = pageNumber;
+          vm.selectedRow = null;
         });
     }
 
@@ -75,9 +90,12 @@
     vm.scanUrl = function () {
       vm.scan.owner = vm.currentUser._id;
       URLScanFactory.save(vm.scan, function (scanReport) {
-        console.log(vm.scansList[0].url);
+        console.log(scanReport);
         vm.scanResults = scanReport;
-        //vm.scansList.unshift(scanReport);
+        if(vm.scanResults && !vm.scanResults.message) {
+          vm.scansList.unshift(scanReport);
+          vm.selectedRow = 0;
+        }
       }, function(error) {
         console.log(error);
       });
@@ -158,7 +176,7 @@
     initialSetup(scans);
 
     $scope.$on('$destroy', function() {
-      socket.unsyncUpdates('scan');
+      //socket.unsyncUpdates('scan');
     });
 
 

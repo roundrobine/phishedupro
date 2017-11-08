@@ -292,7 +292,8 @@ const WHITELISTED_DOMAINS = [
   "santander.co.uk",
   "aol.com",
   "irs.gov",
-  "anz.com.au"
+  "anz.com.au",
+  "youtube.com"
 ]
 
 const PHISHING_CLASS = {

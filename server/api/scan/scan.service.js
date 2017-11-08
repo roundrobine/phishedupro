@@ -47,6 +47,9 @@ const GOOGLE_SYNDICATION = "googlesyndication.com";
 const GRAVATAR = "gravatar.com";
 const LINKS_IN_TAGS = "linksInTags";
 const REQUEST_URLS = "requestUrl";
+const ANGULAR_JS_PATH_REGEX = new RegExp("^#!?\\/.*");
+const IDENTICAL_URL_MAX_COUNT = 4;
+const HASH_ANCHOR_URL_MAX_COUNT = 6;
 
 var Nightmare = require('nightmare');
 
@@ -183,7 +186,7 @@ function checkUrlExists(url, cb) {
   };
   let online = {isOnline:true};
   var req = http.request(options, function (res) {
-   /* if (('' + res.statusCode).match(/^5\d\d$/)){
+    if (('' + res.statusCode).match(/^5\d\d$/)){
     // Server error, I have no idea what happend in the backend
     // but server at least returned correctly (in a HTTP protocol
     // sense) formatted response
@@ -191,9 +194,9 @@ function checkUrlExists(url, cb) {
       online.isOnline = false;
       cb(online, null);
     }
-    else{*/
+    else{
       cb(null, online);
-  /*  }*/
+    }
 
   });
   req.on('error', function (e) {
@@ -218,7 +221,7 @@ function checkUrlExists(url, cb) {
     req.abort();
   });
 
-  req.setTimeout(5000);
+  req.setTimeout(8000);
   req.end();
 }
 
@@ -501,6 +504,8 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
   let newHostNoSubdomain = null;
   let onlyBaseDomainHost = null;
   let onlyNewDomainHost = null;
+  let identicalUrlCount = 0;
+  let hashAnchorsUrlCount = 0;
 
   if(!parsedUrl.isUrlIPAddress) {
     baseHostNoSubdomain = parsedUrl.tokenizeHost.domain + "." + parsedUrl.tokenizeHost.tld;
@@ -509,7 +514,9 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
 
   anchorArray.forEach(function(url){
     newHostNoSubdomain = null;
-    nextUrl = urlParser.parse(url);
+    if (typeof url === 'string' || url instanceof String) {
+      nextUrl = urlParser.parse(url);
+    }
 
     if(nextUrl && nextUrl.hostname) {
       nextUrl.isUrlIPAddress = ipaddr.isValid(nextUrl.hostname);
@@ -527,18 +534,35 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
       if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
 
         if (nextUrl.path === parsedUrl.path && !nextUrl.hash) {
-          validLinks = validLinks + 1;
-          urlOfAnchor.validLinksArray.push(nextUrl.href);
+          identicalUrlCount = identicalUrlCount + 1;
+          if(identicalUrlCount < IDENTICAL_URL_MAX_COUNT){
+            validLinks = validLinks + 1;
+            urlOfAnchor.validLinksArray.push(nextUrl.href);
+          } else{
+            invalidLinks = invalidLinks + 1;
+            urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+          }
+
         }
         else if(nextUrl.path === parsedUrl.path && nextUrl.hash){
-         /* if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
+          if(ANGULAR_JS_PATH_REGEX.test(nextUrl.hash)){
             validLinks = validLinks + 1;
             urlOfAnchor.validLinksArray.push(nextUrl.href);
           }
-          else {*/
+          else if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
+            hashAnchorsUrlCount = hashAnchorsUrlCount + 1;
+            if(hashAnchorsUrlCount < HASH_ANCHOR_URL_MAX_COUNT) {
+              validLinks = validLinks + 1;
+              urlOfAnchor.validLinksArray.push(nextUrl.href);
+            }else{
+              invalidLinks = invalidLinks + 1;
+              urlOfAnchor.invalidLinksArray.push(nextUrl.href);
+            }
+          }
+          else {
             invalidLinks = invalidLinks + 1;
             urlOfAnchor.invalidLinksArray.push(nextUrl.href);
-         /* }*/
+          }
         }
         else {
           validLinks = validLinks + 1;
@@ -1278,7 +1302,7 @@ function googleBlackListLookup(url,cb){
           clientVersion: "1.0.0"
         },
         threatInfo: {
-          threatTypes: ["MALWARE", "SOCIAL_ENGINEERING"],
+          threatTypes: ["SOCIAL_ENGINEERING"],
           platformTypes: ["ANY_PLATFORM"],
           threatEntryTypes: ["URL"],
           threatEntries: [
