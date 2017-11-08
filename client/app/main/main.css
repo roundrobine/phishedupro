@@ -78,6 +78,11 @@
   border-color: #bce8f1
 }
 
+.scan-element-selected{
+  background-color:#d9edf7;
+  border-color: #bce8f1
+}
+
 /*progress bar CSS*/
 
 .progress {
