@@ -14,16 +14,16 @@
       <form class="form-horizontal marginTop15">
         <div class="form-group">
           <div class="col-sm-9">
-            <input type="text" class="form-control " placeholder="Check website" ng-model="vm.scan.url">
+            <input type="text" class="form-control input-lg" placeholder="Check website" ng-model="vm.scan.url">
           </div>
           <div class="col-sm-2">
            <!--<input type="text" class="form-control" placeholder="Target" ng-model="vm.scan.target"> -->
-            <select class="form-control" name="repeatSelect" id="repeatSelect" ng-model="vm.scan.target">
+            <select class="form-control input-lg" name="repeatSelect" id="repeatSelect" ng-model="vm.scan.target">
               <option ng-repeat="target in vm.targetOptions track by target.value" value="{{target.value}}">{{target.name}}</option>
             </select>
           </div>
           <div class="col-sm-1">
-            <button type="button" class="btn btn-primary" ng-click="vm.scanUrl()">Scan</button>
+            <button type="button" class="btn btn-primary input-lg" ng-click="vm.scanUrl()">Scan</button>
           </div>
         </div>
       </form>
