@@ -29,9 +29,9 @@
 
     const PHISHING_CATEGORIES = {
       VERY_LEGITIMATE: 0,
-      LEGITIMATE: 20,
-      FAIR: 40,
-      VERY_SUSPICIOUS: 50,
+      LEGITIMATE: 21,
+      FAIR: 41,
+      VERY_SUSPICIOUS: 51,
       PHISHING: 60
     };
 
