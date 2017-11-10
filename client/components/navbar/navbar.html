@@ -14,6 +14,7 @@
         <li ng-repeat="item in nav.menu" ui-sref-active="active">
             <a ng-show="nav.isLoggedIn()" ui-sref="{{item.state}}">{{item.title}}</a>
         </li>
+        <li ng-show="nav.isAdmin()" ui-sref-active="active"><a ui-sref="rules">Rules</a></li>
         <li ng-show="nav.isAdmin()" ui-sref-active="active"><a ui-sref="admin">Admin</a></li>
       </ul>
 

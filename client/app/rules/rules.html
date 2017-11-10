@@ -1,1 +1,39 @@
-<div>This is the rules view.</div>
+<navbar></navbar>
+
+<div  class="container" ng-if="vm.isAdmin()">
+  <div class="row">
+    <div class="col-sm-12">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Rule Weight</th>
+            <th>Suspicious Threshold</th>
+            <th>Phishing Threshold</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="rule in vm.rules">
+            <td>{{ $index + 1}}</td>
+            <td>{{rule.code}}</td>
+            <td ng-click="vm.goRule(rule)"><a href="">{{rule.name}}</a></td>
+            <td>{{rule.weight}}</td>
+            <td >
+              <span ng-if="!rule.suspicious && rule.suspicious !== 0">Not applicable</span>
+              <span ng-if="rule.suspicious || rule.suspicious === 0">{{rule.suspicious}}</span>
+            </td>
+            <td >
+              <span ng-if="!rule.phishing && rule.phishing !== 0">Not applicable</span>
+              <span ng-if="rule.phishing || rule.phishing === 0">{{rule.phishing}}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer></footer>
+
