@@ -186,7 +186,7 @@ function checkUrlExists(url, cb) {
   };
   let online = {isOnline:true};
   var req = http.request(options, function (res) {
-    if (('' + res.statusCode).match(/^5\d\d$/)){
+   /* if (('' + res.statusCode).match(/^5\d\d$/)){
     // Server error, I have no idea what happend in the backend
     // but server at least returned correctly (in a HTTP protocol
     // sense) formatted response
@@ -194,9 +194,9 @@ function checkUrlExists(url, cb) {
       online.isOnline = false;
       cb(online, null);
     }
-    else{
+    else{*/
       cb(null, online);
-    }
+    /*}*/
 
   });
   req.on('error', function (e) {
@@ -545,19 +545,19 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
 
         }
         else if(nextUrl.path === parsedUrl.path && nextUrl.hash){
-          if(ANGULAR_JS_PATH_REGEX.test(nextUrl.hash)){
+          /*if(ANGULAR_JS_PATH_REGEX.test(nextUrl.hash)){
             validLinks = validLinks + 1;
             urlOfAnchor.validLinksArray.push(nextUrl.href);
           }
-          else if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
-            hashAnchorsUrlCount = hashAnchorsUrlCount + 1;
-            if(hashAnchorsUrlCount < HASH_ANCHOR_URL_MAX_COUNT) {
+          else */if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
+           /* hashAnchorsUrlCount = hashAnchorsUrlCount + 1;
+            if(hashAnchorsUrlCount < HASH_ANCHOR_URL_MAX_COUNT) {*/
               validLinks = validLinks + 1;
               urlOfAnchor.validLinksArray.push(nextUrl.href);
-            }else{
+            /*}else{
               invalidLinks = invalidLinks + 1;
               urlOfAnchor.invalidLinksArray.push(nextUrl.href);
-            }
+            }*/
           }
           else {
             invalidLinks = invalidLinks + 1;
@@ -1335,10 +1335,10 @@ export function generateStats(cb) {
         _id : {target:"$target", active:"active"},
         totalCountPerClass: { $sum: 1 },
         responseTime: {$avg:"$responseTime"},
-        finalScoreAbove50: { $sum : { $cond : { if : { $gte : [ "$finalScore", 51 ] } ,
+        finalScoreAbove50: { $sum : { $cond : { if : { $gte : [ "$finalScore", 52 ] } ,
           then : 1,
           else : 0}}},
-        finalScoreBelowOrEqual50:{ $sum : { $cond : { if : { $lt : [ "$finalScore", 51 ] } ,
+        finalScoreBelowOrEqual50:{ $sum : { $cond : { if : { $lt : [ "$finalScore", 52 ] } ,
           then : 1,
           else : 0}}}
       }},
