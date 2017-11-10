@@ -7,6 +7,10 @@
 
     return $resource('/api/rules/:id', {
       id: '@id'
+    },{
+      update: {
+        method:'PUT'
+      }
     });
   };
 

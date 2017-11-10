@@ -22,11 +22,11 @@
             <td>{{rule.weight}}</td>
             <td >
               <span ng-if="!rule.suspicious && rule.suspicious !== 0">Not applicable</span>
-              <span ng-if="rule.suspicious || rule.suspicious === 0">{{rule.suspicious}}</span>
+              <span ng-if="rule.suspicious || rule.suspicious === 0">{{rule.suspicious}} &nbsp; {{rule.unit}}</span>
             </td>
             <td >
               <span ng-if="!rule.phishing && rule.phishing !== 0">Not applicable</span>
-              <span ng-if="rule.phishing || rule.phishing === 0">{{rule.phishing}}</span>
+              <span ng-if="rule.phishing || rule.phishing === 0">{{rule.phishing}} &nbsp; {{rule.unit}}</span>
             </td>
           </tr>
         </tbody>
