@@ -87,11 +87,11 @@
         vm.phishingSlider.options.ceil = 100;
         vm.suspiciousSlider.options.ceil = 100;
       }
-      else if (vm.rule.code === 'externalLinks' || vm.rule.code === "subdomains"){
+      else if (vm.rule.code === 'externalLinks' || vm.rule.code === "subdomains" || vm.rule.code === 'urlLenght'){
         vm.suspiciousSlider.options.floor =0;
         vm.phishingSlider.options.floor =0;
-        vm.phishingSlider.options.ceil = 20;
-        vm.suspiciousSlider.options.ceil = 20;
+        vm.phishingSlider.options.ceil = 100;
+        vm.suspiciousSlider.options.ceil = 100;
       }
       else if(!vm.rule.unit){
         vm.phishingSlider = null;

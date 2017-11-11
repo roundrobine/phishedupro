@@ -18,40 +18,60 @@
               </div>
               <div class="form-group row">
                 <label for="name" class="col-sm-3 col-form-label">Name</label>
-                <div class="col-sm-9">
-                  <input type="text" ng-model="vm.rule.name" class="form-control " id="name" placeholder="Name">
+                <div class="col-sm-9" ng-class="{ 'has-error': ruleDetailsForm.name.$touched &&
+                ruleDetailsForm.name.$invalid }">
+                  <input type="text" ng-model="vm.rule.name" class="form-control " name="name" id="name" placeholder="Name"
+                         ng-minlength="3" ng-maxlength="150" required>
+                  <div class="help-block alert-danger" ng-messages="ruleDetailsForm.name.$error"
+                       ng-if="ruleDetailsForm.name.$touched">
+                    <p ng-message="minlength">Rule name is too short.</p>
+                    <p ng-message="maxlength">Rule name is too long.</p>
+                    <p ng-message="required">Rule name is required.</p>
+                  </div>
                 </div>
               </div>
               <div class="form-group row">
                 <label for="weight" class="col-sm-3 col-form-label">Weight</label>
                 <div class="col-sm-9">
-                  <rzslider id="weight" rz-slider-model="vm.rule.weight" rz-slider-options="vm.weightSlider.options"></rzslider>
+                  <rzslider id="weight" rz-slider-model="vm.rule.weight" rz-slider-options="vm.weightSlider.options">
+                  </rzslider>
                 </div>
               </div>
               <div class="form-group row" ng-if="vm.suspiciousSlider">
                 <label for="suspiciousSlider" class="col-sm-3 col-form-label">Suspicious Threshold
                   <span ng-if="vm.rule.unit">({{vm.rule.unit}})</span></label>
                 <div class="col-sm-9">
-                  <rzslider id="suspiciousSlider" rz-slider-model="vm.rule.suspicious" rz-slider-options="vm.suspiciousSlider.options"></rzslider>
+                  <rzslider id="suspiciousSlider" rz-slider-model="vm.rule.suspicious"
+                            rz-slider-options="vm.suspiciousSlider.options">
+                  </rzslider>
                 </div>
               </div>
               <div class="form-group row" ng-if="vm.phishingSlider">
                 <label for="phishingSlider" class="col-sm-3 col-form-label">Phishing Threshold
                   <span ng-if="vm.rule.unit">({{vm.rule.unit}})</span></label>
                 <div class="col-sm-9">
-                  <rzslider id="phishingSlider" rz-slider-model="vm.rule.phishing" rz-slider-options="vm.phishingSlider.options"></rzslider>
+                  <rzslider id="phishingSlider" rz-slider-model="vm.rule.phishing"
+                            rz-slider-options="vm.phishingSlider.options">
+                  </rzslider>
                 </div>
               </div>
               <div class="form-group row">
                 <label for="description" class="col-sm-3 col-form-label">Description</label>
-                <div class="col-sm-9">
-                  <textarea class="form-control" ng-model="vm.rule.description" id="description" rows="8"></textarea>
+                <div class="col-sm-9" ng-class="{ 'has-error': ruleDetailsForm.description.$touched &&
+                ruleDetailsForm.description.$invalid }">
+                  <textarea class="form-control" ng-model="vm.rule.description" name="description" id="description"
+                            rows="8" ng-minlength="10" required></textarea>
+                  <div class="help-block alert-danger" ng-messages="ruleDetailsForm.description.$error"
+                       ng-if="ruleDetailsForm.description.$touched">
+                    <p ng-message="minlength">Rule description is too short.</p>
+                    <p ng-message="required">Rule description is required.</p>
+                  </div>
                 </div>
               </div>
               <div class="form-group row">
                 <div class="col-sm-12">
                     <button type="button" ng-click="vm.goToRules()" class="btn btn-default">Back to Rules</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="submit"  ng-disabled="ruleDetailsForm.$invalid" class="btn btn-primary">Save</button>
                 </div>
               </div>
             </form>

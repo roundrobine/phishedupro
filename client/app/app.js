@@ -12,7 +12,8 @@ angular.module('phisheduproApp', [
   'ui.bootstrap',
   'validation.match',
   'angularUtils.directives.dirPagination',
-  'rzModule'
+  'rzModule',
+  'ngMessages'
 ])
   .config(function($urlRouterProvider, $locationProvider) {
     $urlRouterProvider
