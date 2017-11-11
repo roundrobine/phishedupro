@@ -42,6 +42,36 @@
     });
 
     vm.updateRule = function(form){
+      if(vm.suspiciousSlider && vm.phishingSlider) {
+        if(vm.rule.code === 'pageAuthority' || vm.rule.code === 'domainAuthority' || vm.rule.code === 'externalLinks'
+        || vm.rule.code === 'myWOT') {
+          if (vm.rule.suspicious <= vm.rule.phishing) {
+            form.suspiciousSliderInput.$setValidity('suspiciousSliderError', false);
+            form.phishingSliderInput.$setValidity('phishingSliderError', false);
+            vm.phishingSliderMessage = "Phishing rule value could not be bigger or equal to suspicious rule value.";
+            vm.suspiciousSliderMessage = "Suspicious rule value could not be less or equal to phishing rule value.";
+          }
+          else {
+            form.suspiciousSliderInput.$setValidity('suspiciousSliderError', true);
+            form.phishingSliderInput.$setValidity('phishingSliderError', true);
+            vm.phishingSliderMessage = null;
+            vm.suspiciousSliderMessage = null;
+          }
+        }else{
+          if (vm.rule.suspicious >= vm.rule.phishing) {
+            form.suspiciousSliderInput.$setValidity('suspiciousSliderError', false);
+            form.phishingSliderInput.$setValidity('phishingSliderError', false);
+            vm.phishingSliderMessage = "Phishing rule value could not be less or equal to suspicious rule value.";
+            vm.suspiciousSliderMessage = "Suspicious rule value could not be bigger or equal to phishing rule value.";
+          }
+          else {
+            form.suspiciousSliderInput.$setValidity('suspiciousSliderError', true);
+            form.phishingSliderInput.$setValidity('phishingSliderError', true);
+            vm.phishingSliderMessage = null;
+            vm.suspiciousSliderMessage = null;
+          }
+        }
+      }
       if(form.$valid) {
 
         RulesService.update({
