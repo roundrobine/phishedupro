@@ -404,12 +404,12 @@ export function generatePhishingFeatureSet(scanResults, cb){
               break;
             case RULE_CODES.websiteTrafficAlexa:
               if(scanStatistics.websiteTrafficAlexa){
-                if(scanStatistics.websiteTrafficAlexa.rank === rules[i].phishing){
+                if(scanStatistics.websiteTrafficAlexa.rank === UNKNOWN){
                   scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.phishing;
                   urlScore = urlScore + rules[i].weight;
                 }
                 else if (scanStatistics.websiteTrafficAlexa.rank > rules[i].suspicious ||
-                  (scanStatistics.websiteTrafficAlexa.rank > rules[i].phishing && scanStatistics.websiteTrafficAlexa.rank <= rules[i].suspicious
+                  (scanStatistics.websiteTrafficAlexa.rank > UNKNOWN && scanStatistics.websiteTrafficAlexa.rank <= rules[i].suspicious
                     && (scanResults.urlStatisitcs.topPhishingDomain || scanResults.urlStatisitcs.topPhishingSubDomain) )){
                   scanStatistics.websiteTrafficAlexa.value = PHISHING_CLASS.suspicious;
                   urlScore = urlScore + (rules[i].weight / 2);
