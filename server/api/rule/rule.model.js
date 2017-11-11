@@ -35,6 +35,11 @@ var RuleSchema = new mongoose.Schema({
     type: Number,
     min: -2
   },
+  unit:{
+    type: String,
+    maxlength: 10,
+    trim: true
+  },
   active: {
     type:Boolean,
     default: true,

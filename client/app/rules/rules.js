@@ -6,6 +6,15 @@ angular.module('phisheduproApp')
       .state('rules', {
         url: '/rules',
         templateUrl: 'app/rules/rules.html',
-        controller: 'RulesCtrl'
-      });
+        controller: 'RulesCtrl',
+        controllerAs: 'vm',
+        authenticate: 'admin'
+      })
+      .state('ruledetails', {
+        url: '/rules/:id',
+        templateUrl: 'app/rules/rule-details.html',
+        controller: 'RuleDetailsCtrl',
+        controllerAs: 'vm',
+        authenticate: 'admin'
+    });
   });
