@@ -48,8 +48,8 @@ const GRAVATAR = "gravatar.com";
 const LINKS_IN_TAGS = "linksInTags";
 const REQUEST_URLS = "requestUrl";
 const ANGULAR_JS_PATH_REGEX = new RegExp("^#!?\\/.*");
-const IDENTICAL_URL_MAX_COUNT = 4;
-const HASH_ANCHOR_URL_MAX_COUNT = 5;
+const IDENTICAL_URL_MAX_COUNT = 5;
+const HASH_ANCHOR_URL_MAX_COUNT = 15;
 
 var Nightmare = require('nightmare');
 
@@ -504,8 +504,9 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
   let newHostNoSubdomain = null;
   let onlyBaseDomainHost = null;
   let onlyNewDomainHost = null;
-  let identicalUrlCount = 0;
-  let hashAnchorsUrlCount = 0;
+  /*let identicalUrlCount = 0;
+  let hashAnchorsUrlCount = 0;*/
+  let anchorArrayLength = anchorArray.length;
 
   if(!parsedUrl.isUrlIPAddress) {
     baseHostNoSubdomain = parsedUrl.tokenizeHost.domain + "." + parsedUrl.tokenizeHost.tld;
@@ -534,8 +535,8 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
       if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
 
         if (nextUrl.path === parsedUrl.path && !nextUrl.hash) {
-          identicalUrlCount = identicalUrlCount + 1;
-          if(identicalUrlCount < IDENTICAL_URL_MAX_COUNT){
+          /*identicalUrlCount = identicalUrlCount + 1;*/
+          if(anchorArrayLength > IDENTICAL_URL_MAX_COUNT){
             validLinks = validLinks + 1;
             urlOfAnchor.validLinksArray.push(nextUrl.href);
           } else{
@@ -550,14 +551,14 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
             urlOfAnchor.validLinksArray.push(nextUrl.href);
           }
           else */if(!(nextUrl.hash === HASH) && !(nextUrl.hash === CONTENT_HASH) && !(nextUrl.hash === SKIP_HASH)){
-           /* hashAnchorsUrlCount = hashAnchorsUrlCount + 1;
-            if(hashAnchorsUrlCount < HASH_ANCHOR_URL_MAX_COUNT) {*/
+            //hashAnchorsUrlCount = hashAnchorsUrlCount + 1;
+            if(anchorArrayLength > HASH_ANCHOR_URL_MAX_COUNT) {
               validLinks = validLinks + 1;
               urlOfAnchor.validLinksArray.push(nextUrl.href);
-            /*}else{
+            }else{
               invalidLinks = invalidLinks + 1;
               urlOfAnchor.invalidLinksArray.push(nextUrl.href);
-            }*/
+            }
           }
           else {
             invalidLinks = invalidLinks + 1;
