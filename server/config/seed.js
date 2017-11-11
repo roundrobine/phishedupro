@@ -24,12 +24,13 @@ Rule.find({}).removeAsync()
       weight: 0.003,
       description: 'Phishers can use long URL to hide the doubtful part in the address bar. For example: ' +
       'http://federmacedoadv.com.br/3f/aze/ab51e2e319e51502f416dbe46b773a5e/?cmd=_home&amp;dispatch=11004d58f5b74f8dc1e7c2e8dd4105e811004d58f5b74f8dc1e7c2e8dd4105e8@phishing.website.html' +
-      'To ensure accuracy of our study, we calculated the length of URLs in the dataset and produced an average URL length.' +
-      'The results showed that if the length of the URL is greater than or equal 54 characters then the URL classified ' +
-      'as phishing. By reviewing our dataset we were able to find 1220 URLs lengths equals to 54 or more which constitute ' +
-      '48.8% of the total dataset size.',
+      'To ensure accuracy of their study, (Mohammad, Thabtah and McCluskey 2012) calculated the length of URLs in the data-set ' +
+      'and produced an average URL length. The results showed that if the length of the URL is greater than or equal 54 ' +
+      'characters then the URL classified as phishing. By reviewing their data-set they were able to find 1220 URLs lengths ' +
+      'equals to 54 or more which constitute 48.8% of the total data-set size.',
       suspicious: 54,
       phishing: 75,
+      unit: 'characters',
       active: true
     }, {
       name: 'Using URL Shortening Services “TinyURL”',
@@ -69,9 +70,10 @@ Rule.find({}).removeAsync()
       'Otherwise, if the URL has no sub domains, we will assign “Legitimate” to the feature. ',
       suspicious: 1,
       phishing: 2,
+      unit: 'subdomain',
       active: true
     },{
-      name: 'HTTPS (Hyper Text Transfer Protocol with Secure Sockets Layer) ',
+      name: 'Hyper Text Transfer Protocol with Secure Sockets Layer',
       code: 'ssl',
       weight: 0.499,
       description: 'The existence of HTTPS is very important in giving the impression of website legitimacy, ' +
@@ -82,6 +84,7 @@ Rule.find({}).removeAsync()
       '“GeoTrust, GoDaddy, Network Solutions, Thawte, Comodo, Doster and VeriSign”. ' +
       'Furthermore, by testing out our datasets, we find that the minimum age of a reputable certificate is more than 6 months.',
       phishing: 181,
+      unit: 'days',
       active: true
     },{
       name: 'Domain Registration Length',
@@ -91,6 +94,7 @@ Rule.find({}).removeAsync()
       'that trustworthy domains are regularly paid for several years in advance. In our dataset, ' +
       'we find that the longest fraudulent domains have been used for one year only.',
       phishing: 364,
+      unit: 'days',
       active: true
     },{
       name: 'Request URL',
@@ -101,6 +105,7 @@ Rule.find({}).removeAsync()
       'embedded within the webpage are sharing the same domain',
       suspicious: 22,
       phishing: 61,
+      unit: '%',
       active: true
     },{
       name: 'URL of Anchor',
@@ -111,6 +116,7 @@ Rule.find({}).removeAsync()
       'This is similar to request URL feature.',
       suspicious: 31,
       phishing: 67,
+      unit: '%',
       active: true
     },{
       name: 'Links in (Script) and (Link) tags',
@@ -122,6 +128,7 @@ Rule.find({}).removeAsync()
       'It is expected that these tags are linked to the same domain of the webpage.',
       suspicious: 17,
       phishing: 81,
+      unit: '%',
       active: true
     },{
       name: 'Server Form Handler (SFH)',
@@ -156,6 +163,7 @@ Rule.find({}).removeAsync()
       'for a short period of time. By reviewing our dataset, we find that the minimum age ' +
       'of the legitimate domain is 6 months.',
       phishing: 180,
+      unit: 'days',
       active: true
     },{
       name: 'Website Traffic - Alexa Ranking',
@@ -169,7 +177,7 @@ Rule.find({}).removeAsync()
       'Furthermore, if the domain has no traffic or is not recognized by the Alexa database, ' +
       'it is classified as “Phishing”. Otherwise, it is classified as “Suspicious”.',
       suspicious: 500000,
-      phishing: -2,
+      unit: 'rank',
       active: true
     },{
       name: 'PageRank Mozescape',
@@ -183,6 +191,7 @@ Rule.find({}).removeAsync()
       'logarithmic scale between 0 and 10. Thus, it\'s much easier to improve from a MozRank of 3 to 4 ' +
       'than it is to improve from 8 to 9. The rule is if MozRank > 0.2 the page is legitimate otherwise it is phishing.',
       phishing: 0.2,
+      unit: 'PageRank',
       active: true
     },{
       name: 'Page Authority Mozescape',
@@ -248,6 +257,7 @@ Rule.find({}).removeAsync()
       'trusted third party information, such as blacklists of phishing sites.',
       suspicious: 60,
       phishing: 40,
+      unit: '%',
       active: true
     });
   });

@@ -1,7 +1,7 @@
 'use strict';
 (function() {
 
-  var RulesCtrl = function ($scope, socket, Auth, RulesService) {
+  var RulesCtrl = function ($scope, $state, socket, Auth, RulesService) {
 
     var vm = this;
     vm.isAuthenticated = Auth.isLoggedIn;
@@ -17,12 +17,19 @@
       });
     };
 
+    vm.goRule = function(rule) {
+
+      $state.go('ruledetails', {
+        id: rule._id
+      });
+    };
+
 
     vm.getRules();
 
   };
 
-  RulesCtrl.$inject = ['$scope','socket', 'Auth',  'RulesService'];
+  RulesCtrl.$inject = ['$scope', '$state', 'socket', 'Auth',  'RulesService'];
 
   angular.module('phisheduproApp')
     .controller('RulesCtrl', RulesCtrl);
