@@ -205,7 +205,8 @@ var ScanSchema = new mongoose.Schema({
           message: '{VALUE} is not an integer value'
         },
         required: true
-      }
+      },
+      certType:String
     },
     subdomains: {
       count: {
