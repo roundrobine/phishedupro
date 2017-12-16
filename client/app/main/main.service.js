@@ -16,6 +16,13 @@
       },
       paged: {
         method:'GET'
+      },
+      export: {
+        method:'GET',
+        isArray:true,
+        params: {
+          controller:'export'
+        }
       }
     });
   };

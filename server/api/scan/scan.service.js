@@ -48,7 +48,7 @@ const GRAVATAR = "gravatar.com";
 const LINKS_IN_TAGS = "linksInTags";
 const REQUEST_URLS = "requestUrl";
 const ANGULAR_JS_PATH_REGEX = new RegExp("^#!?\\/.*");
-const IDENTICAL_URL_MAX_COUNT = 5;
+const IDENTICAL_URL_MAX_COUNT = 4;
 const HASH_ANCHOR_URL_MAX_COUNT = 15;
 
 var Nightmare = require('nightmare');
@@ -306,6 +306,14 @@ export function generatePhishingFeatureSet(scanResults, cb){
                   urlScore = urlScore + rules[i].weight;
                 }
                 else if(scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration > 0
+                  && scanStatistics.ssl.expiresIn > -1 && scanStatistics.ssl.completeCertChain &&
+                  !scanResults.urlStatisitcs.topPhishingDomain && !scanResults.urlStatisitcs.topPhishingSubDomain
+                  && !scanResults.urlStatisitcs.topPhishingIP
+                  && (scanStatistics.ssl.certType === "OV" || scanStatistics.ssl.certType === "EV")){
+
+                  scanStatistics.ssl.value = PHISHING_CLASS.legitimate;
+                }
+                else if(scanStatistics.ssl.isTrusted && scanStatistics.ssl.duration > 0
                   && scanStatistics.ssl.expiresIn > -1 && scanStatistics.ssl.completeCertChain && scanResults.urlStatisitcs.whitelistedDomain){
 
                     scanStatistics.ssl.value = PHISHING_CLASS.legitimate;
@@ -504,8 +512,8 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
   let newHostNoSubdomain = null;
   let onlyBaseDomainHost = null;
   let onlyNewDomainHost = null;
-  /*let identicalUrlCount = 0;
-  let hashAnchorsUrlCount = 0;*/
+  let identicalUrlCount = 0;
+  //let hashAnchorsUrlCount = 0;
   let anchorArrayLength = anchorArray.length;
 
   if(!parsedUrl.isUrlIPAddress) {
@@ -535,8 +543,8 @@ function urlOfAnchorStatistics(anchorArray, parsedUrl, linkType){
       if (nextUrl.hostname && parsedUrl.hostname && nextUrl.hostname === parsedUrl.hostname) {
 
         if (nextUrl.path === parsedUrl.path && !nextUrl.hash) {
-          /*identicalUrlCount = identicalUrlCount + 1;*/
-          if(anchorArrayLength > IDENTICAL_URL_MAX_COUNT){
+          identicalUrlCount = identicalUrlCount + 1;
+          if(identicalUrlCount <= IDENTICAL_URL_MAX_COUNT){
             validLinks = validLinks + 1;
             urlOfAnchor.validLinksArray.push(nextUrl.href);
           } else{
@@ -971,6 +979,7 @@ function extractValuablePhishingAttributesFromApiResults(results){
             isTrusted: scanModel.sslCertificate.trustedCA,
             expiresIn: scanModel.sslCertificate.expiresIn,
             completeCertChain: scanModel.sslCertificate.completeCertChain,
+            certType: scanModel.sslCertificate.certType
           };
         }
         else{
@@ -1454,6 +1463,7 @@ export function checkURL(scan,cb){
         .then(function (result) {
           callback(null, result);
         }, function (error) {
+          console.log("Error is catch! ", error);
           callback(error, null);
         });
 

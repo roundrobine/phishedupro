@@ -69,6 +69,15 @@
     };
 
 
+    vm.exportScanStatistics = function () {
+      URLScanFactory.export(function (statistics) {
+        console.log(statistics);
+      }, function(error) {
+        console.log(error);
+      });
+    };
+
+
     function getResultsPage(pageNumber) {
       if(!vm.scansList){ return;}
       URLScanFactory.paged(

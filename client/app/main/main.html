@@ -37,8 +37,11 @@
   <div class="row">
     <div class="col-sm-4">
       <div class = "panel panel-primary">
-        <div class ="panel-heading">Scan Urls Dastabase </div>
-
+        <div class ="panel-heading">
+            <span>Scan Urls Dastabase</span>&nbsp;&nbsp;&nbsp;&nbsp;
+            <span><a class="btn btn-default" href="/scan/export" target="_self" download role="button">
+              Export Dataset</a></span>
+        </div>
         <div class = "panel-body">
             <div class="row">
               <div class="col-sm-12">
@@ -101,8 +104,8 @@
             <div class="row">
               <div class="col-sm-5">Final Score (2 class):</div>
               <div class = "col-sm-7">
-                <span ng-if="vm.scanResults.finalScore < 51" class = "label label-success">Legitimate web page</span>
-                <span ng-if="vm.scanResults.finalScore > 50" class = "label label-danger">Phishing web page</span>
+                <span ng-if="vm.scanResults.finalScore < 52" class = "label label-success">Legitimate web page</span>
+                <span ng-if="vm.scanResults.finalScore > 51" class = "label label-danger">Phishing web page</span>
               </div>
             </div>
           </li>
@@ -166,7 +169,8 @@
         </div>
         <ul ng-if="vm.scanResults && !vm.scanResults.message" class="list-group phishing-class-label">
           <li ng-repeat="rule in vm.scanResults.rules" class="list-group-item d-flex justify-content-between align-items-center">
-            {{rule.name}}
+            <span ng-if="rule.code === 'ssl'">HTTPS</span>
+            <span ng-if="rule.code !== 'ssl'">{{rule.name}}</span>
             <span ng-if="vm.scanResults.statistics[rule.code].count >= -2"
                   ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
                <span ng-if="vm.scanResults.statistics[rule.code].count === -2">{{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}</span>
@@ -186,6 +190,14 @@
                   ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
               <span ng-if="vm.scanResults.statistics[rule.code].rank === -2"> No rank</span>
               <span ng-if="vm.scanResults.statistics[rule.code].rank !== -2">{{vm.scanResults.statistics[rule.code].rank}} &nbsp; rank</span>
+            </span>
+            <span ng-if="vm.scanResults.statistics[rule.code].duration"
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
+              {{vm.scanResults.statistics[rule.code].duration}} days
+            </span>
+            <span ng-if="vm.scanResults.statistics[rule.code].certType"
+                  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
+              {{vm.scanResults.statistics[rule.code].certType}}
             </span>
             <span  ng-class="vm.applyCollor(vm.scanResults.statistics[rule.code].value)" class="badge badge-pill phishing-class-label-90">
               {{vm.phishingClass(vm.scanResults.statistics[rule.code].value)}}

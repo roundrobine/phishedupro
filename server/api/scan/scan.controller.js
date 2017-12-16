@@ -15,6 +15,8 @@ var ScanService = require('./scan.service');
 var url = require('url');
 var parseDomain = require("parse-domain");
 var ipaddr = require('ipaddr.js');
+var json2csv = require('json2csv');
+var fs = require('fs');
 const DOT_CHARACTER = '\\.';
 const WWW = "www"
 
@@ -106,6 +108,68 @@ function removeEntity(res) {
         });
     }
   };
+}
+
+function exportToCSV(res, statusCode) {
+  statusCode = statusCode || 200;
+  var fields = ['url','scanDate','isBlacklisted','finalScore', 'target', 'inputFields','domainRegistrationLength','ageOfDomain',
+    'websiteTrafficAlexa','myWOT','externalLinks','domainAuthority','pageAuthority','mozRankURL','urlLenght','subdomains',
+    'ssl','keywordDomainReport','isIPAddress','hasPrefixOrSufix','atSymbol','tinyURL','iframe','sfh','linksInTags',
+    'requestUrls','urlOfAnchors'];
+  return function(entity) {
+    if (entity) {
+      var csv = json2csv({ data: entity, fields: fields });
+      fs.writeFile('website_scan_statisitics.csv', csv, function(err) {
+        res.attachment('website_scan_statisitics.csv');
+        res.status(200).send(csv);
+      });
+    }
+  };
+}
+
+export function exportScanStatistics(req, res) {
+  Scan.aggregate(
+    {
+      $match: {
+        active: { $ne: false},
+      }
+    },
+    {
+      $project: {
+        url: 1,
+        scanDate: 1,
+        finalScore:1,
+        target:1,
+        isBlacklisted:1,
+        inputFields:"$statistics.inputFields.value",
+        domainRegistrationLength:"$statistics.domainRegistrationLength.value",
+        ageOfDomain:"$statistics.ageOfDomain.value",
+        websiteTrafficAlexa:"$statistics.websiteTrafficAlexa.value",
+        myWOT:"$statistics.myWOT.value",
+        externalLinks:"$statistics.externalLinks.value",
+        domainAuthority:"$statistics.domainAuthority.value",
+        pageAuthority:"$statistics.pageAuthority.value",
+        mozRankURL:"$statistics.mozRankURL.value",
+        urlLenght:"$statistics.urlLenght.value",
+        subdomains:"$statistics.subdomains.value",
+        ssl:"$statistics.ssl.value",
+        keywordDomainReport:"$statistics.keywordDomainReport.value",
+        isIPAddress:"$statistics.isIPAddress.value",
+        hasPrefixOrSufix:"$statistics.hasPrefixOrSufix.value",
+        atSymbol:"$statistics.atSymbol.value",
+        tinyURL:"$statistics.tinyURL.value",
+        iframe:"$statistics.iframe.value",
+        sfh:"$statistics.sfh.value",
+        linksInTags:"$statistics.linksInTags.value",
+        requestUrls:"$statistics.requestUrls.value",
+        urlOfAnchors:"$statistics.urlOfAnchors.value",
+      }
+    },
+    {$sort : { scanDate: -1}}
+  )
+    .execAsync()
+    .then(exportToCSV(res))
+    .catch(handleError(res));
 }
 
 // Gets a list of Scans
