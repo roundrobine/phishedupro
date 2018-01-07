@@ -4,16 +4,26 @@ var proxyquire = require('proxyquire').noPreserveCache();
 
 var scanCtrlStub = {
   index: 'scanCtrl.index',
+  exportScanStatistics: 'scanCtrl.exportScanStatistics',
+  stats: 'scanCtrl.stats',
   show: 'scanCtrl.show',
   create: 'scanCtrl.create',
   update: 'scanCtrl.update',
   destroy: 'scanCtrl.destroy'
 };
 
+var authServiceStub = {
+  isAuthenticated() {
+    return 'authService.isAuthenticated';
+  },
+  hasRole(role) {
+    return 'authService.hasRole.' + role;
+  }
+};
+
 var routerStub = {
   get: sinon.spy(),
   put: sinon.spy(),
-  patch: sinon.spy(),
   post: sinon.spy(),
   delete: sinon.spy()
 };
@@ -25,7 +35,8 @@ var scanIndex = proxyquire('./index.js', {
       return routerStub;
     }
   },
-  './scan.controller': scanCtrlStub
+  './scan.controller': scanCtrlStub,
+  '../../auth/auth.service': authServiceStub
 });
 
 describe('Scan API Router:', function() {
@@ -36,9 +47,9 @@ describe('Scan API Router:', function() {
 
   describe('GET /scan', function() {
 
-    it('should route to scan.controller.index', function() {
+    it('should be authenticated and should route to scan.controller.index', function() {
       expect(routerStub.get
-        .withArgs('/', 'scanCtrl.index')
+        .withArgs('/', 'authService.isAuthenticated', 'scanCtrl.index')
         ).to.have.been.calledOnce;
     });
 
@@ -46,19 +57,39 @@ describe('Scan API Router:', function() {
 
   describe('GET /scan/:id', function() {
 
-    it('should route to scan.controller.show', function() {
+    it('should be authenticated and should route to scan.controller.show', function() {
       expect(routerStub.get
-        .withArgs('/:id', 'scanCtrl.show')
+        .withArgs('/:id', 'authService.isAuthenticated', 'scanCtrl.show')
         ).to.have.been.calledOnce;
+    });
+
+  });
+
+  describe('GET /scan/export', function() {
+
+    it('should route to scan.controller.exportScanStatistics', function() {
+      expect(routerStub.get
+        .withArgs('/export', 'scanCtrl.exportScanStatistics')
+      ).to.have.been.calledOnce;
+    });
+
+  });
+
+  describe('GET /scan/stats', function() {
+
+    it('should be authenticated and should route to scan.controller.stats', function() {
+      expect(routerStub.get
+        .withArgs('/stats','authService.isAuthenticated', 'scanCtrl.stats')
+      ).to.have.been.calledOnce;
     });
 
   });
 
   describe('POST /scan', function() {
 
-    it('should route to scan.controller.create', function() {
+    it('should be authenticated and should route to scan.controller.create', function() {
       expect(routerStub.post
-        .withArgs('/', 'scanCtrl.create')
+        .withArgs('/', 'authService.isAuthenticated','scanCtrl.create')
         ).to.have.been.calledOnce;
     });
 
@@ -66,19 +97,9 @@ describe('Scan API Router:', function() {
 
   describe('PUT /scan/:id', function() {
 
-    it('should route to scan.controller.update', function() {
+    it('should verify admin role and should route to scan.controller.update', function() {
       expect(routerStub.put
-        .withArgs('/:id', 'scanCtrl.update')
-        ).to.have.been.calledOnce;
-    });
-
-  });
-
-  describe('PATCH /scan/:id', function() {
-
-    it('should route to scan.controller.update', function() {
-      expect(routerStub.patch
-        .withArgs('/:id', 'scanCtrl.update')
+        .withArgs('/:id', 'authService.hasRole.admin', 'scanCtrl.update')
         ).to.have.been.calledOnce;
     });
 
@@ -86,9 +107,9 @@ describe('Scan API Router:', function() {
 
   describe('DELETE /scan/:id', function() {
 
-    it('should route to scan.controller.destroy', function() {
+    it('should verify admin role and should route to scan.controller.destroy', function() {
       expect(routerStub.delete
-        .withArgs('/:id', 'scanCtrl.destroy')
+        .withArgs('/:id', 'authService.hasRole.admin', 'scanCtrl.destroy')
         ).to.have.been.calledOnce;
     });
 

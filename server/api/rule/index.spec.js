@@ -10,10 +10,18 @@ var ruleCtrlStub = {
   destroy: 'ruleCtrl.destroy'
 };
 
+var authServiceStub = {
+  isAuthenticated() {
+    return 'authService.isAuthenticated';
+  },
+  hasRole(role) {
+    return 'authService.hasRole.' + role;
+  }
+};
+
 var routerStub = {
   get: sinon.spy(),
   put: sinon.spy(),
-  patch: sinon.spy(),
   post: sinon.spy(),
   delete: sinon.spy()
 };
@@ -25,7 +33,8 @@ var ruleIndex = proxyquire('./index.js', {
       return routerStub;
     }
   },
-  './rule.controller': ruleCtrlStub
+  './rule.controller': ruleCtrlStub,
+  '../../auth/auth.service': authServiceStub
 });
 
 describe('Rule API Router:', function() {
@@ -36,9 +45,9 @@ describe('Rule API Router:', function() {
 
   describe('GET /api/rules', function() {
 
-    it('should route to rule.controller.index', function() {
+    it('should be authenticated and should route to rule.controller.index', function() {
       expect(routerStub.get
-        .withArgs('/', 'ruleCtrl.index')
+        .withArgs('/', 'authService.isAuthenticated', 'ruleCtrl.index')
         ).to.have.been.calledOnce;
     });
 
@@ -46,9 +55,9 @@ describe('Rule API Router:', function() {
 
   describe('GET /api/rules/:id', function() {
 
-    it('should route to rule.controller.show', function() {
+    it('should verify admin role and should route to rule.controller.show', function() {
       expect(routerStub.get
-        .withArgs('/:id', 'ruleCtrl.show')
+        .withArgs('/:id', 'authService.hasRole.admin', 'ruleCtrl.show')
         ).to.have.been.calledOnce;
     });
 
@@ -56,9 +65,9 @@ describe('Rule API Router:', function() {
 
   describe('POST /api/rules', function() {
 
-    it('should route to rule.controller.create', function() {
+    it('should verify admin role and should route to rule.controller.create', function() {
       expect(routerStub.post
-        .withArgs('/', 'ruleCtrl.create')
+        .withArgs('/', 'authService.hasRole.admin', 'ruleCtrl.create')
         ).to.have.been.calledOnce;
     });
 
@@ -66,19 +75,9 @@ describe('Rule API Router:', function() {
 
   describe('PUT /api/rules/:id', function() {
 
-    it('should route to rule.controller.update', function() {
+    it('should verify admin role and should route to rule.controller.update', function() {
       expect(routerStub.put
-        .withArgs('/:id', 'ruleCtrl.update')
-        ).to.have.been.calledOnce;
-    });
-
-  });
-
-  describe('PATCH /api/rules/:id', function() {
-
-    it('should route to rule.controller.update', function() {
-      expect(routerStub.patch
-        .withArgs('/:id', 'ruleCtrl.update')
+        .withArgs('/:id', 'authService.hasRole.admin', 'ruleCtrl.update')
         ).to.have.been.calledOnce;
     });
 
@@ -86,9 +85,9 @@ describe('Rule API Router:', function() {
 
   describe('DELETE /api/rules/:id', function() {
 
-    it('should route to rule.controller.destroy', function() {
+    it('should verify admin role and should route to rule.controller.destroy', function() {
       expect(routerStub.delete
-        .withArgs('/:id', 'ruleCtrl.destroy')
+        .withArgs('/:id', 'authService.hasRole.admin', 'ruleCtrl.destroy')
         ).to.have.been.calledOnce;
     });
 
