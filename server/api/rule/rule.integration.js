@@ -124,6 +124,7 @@ describe('Rule API:', function() {
     beforeEach(function(done) {
       request(app)
         .get('/api/rules/' + newRule._id)
+        .set('authorization', 'Bearer ' + token)
         .expect(200)
         .expect('Content-Type', /json/)
         .end((err, res) => {
@@ -140,8 +141,11 @@ describe('Rule API:', function() {
     });
 
     it('should respond with the requested rule', function() {
-      expect(rule.name).to.equal('New Rule');
-      expect(rule.info).to.equal('This is the brand new rule!!!');
+      expect(newRule.name).to.equal('URL’s having at Symbol');
+      expect(newRule.code).to.equal('atSymbol');
+      expect(newRule.weight).to.equal(0.002);
+      expect(newRule.description).to.equal('Symbol description for the rule that at symbol should be present in the URL');
+      expect(newRule.active).to.equal(true);
     });
 
   });
@@ -152,9 +156,14 @@ describe('Rule API:', function() {
     beforeEach(function(done) {
       request(app)
         .put('/api/rules/' + newRule._id)
+        .set('authorization', 'Bearer ' + token)
         .send({
-          name: 'Updated Rule',
-          info: 'This is the updated rule!!!'
+          name: 'Domain Registration Length',
+          code: 'domainRegistrationLength',
+          weight: 0.036,
+          description: 'Based on the fact that a phishing website lives for a short period of time, we believe ' +
+          'that trustworthy domains are regularly paid for several years in advance. In our dataset, ' +
+          'we find that the longest fraudulent domains have been used for one year only.',
         })
         .expect(200)
         .expect('Content-Type', /json/)
@@ -172,8 +181,13 @@ describe('Rule API:', function() {
     });
 
     it('should respond with the updated rule', function() {
-      expect(updatedRule.name).to.equal('Updated Rule');
-      expect(updatedRule.info).to.equal('This is the updated rule!!!');
+      expect(updatedRule.name).to.equal('Domain Registration Length');
+      expect(updatedRule.code).to.equal('domainRegistrationLength');
+      expect(updatedRule.weight).to.equal(0.036);
+      expect(updatedRule.description).to.equal('Based on the fact that a phishing website lives for a short period of time, we believe ' +
+        'that trustworthy domains are regularly paid for several years in advance. In our dataset, ' +
+        'we find that the longest fraudulent domains have been used for one year only.');
+      expect(updatedRule.active).to.equal(true);
     });
 
   });
@@ -183,6 +197,7 @@ describe('Rule API:', function() {
     it('should respond with 204 on successful removal', function(done) {
       request(app)
         .delete('/api/rules/' + newRule._id)
+        .set('authorization', 'Bearer ' + token)
         .expect(204)
         .end((err, res) => {
           if (err) {
@@ -195,6 +210,7 @@ describe('Rule API:', function() {
     it('should respond with 404 when rule does not exist', function(done) {
       request(app)
         .delete('/api/rules/' + newRule._id)
+        .set('authorization', 'Bearer ' + token)
         .expect(404)
         .end((err, res) => {
           if (err) {
