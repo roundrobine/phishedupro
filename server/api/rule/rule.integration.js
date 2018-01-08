@@ -141,11 +141,11 @@ describe('Rule API:', function() {
     });
 
     it('should respond with the requested rule', function() {
-      expect(newRule.name).to.equal('URL’s having at Symbol');
-      expect(newRule.code).to.equal('atSymbol');
-      expect(newRule.weight).to.equal(0.002);
-      expect(newRule.description).to.equal('Symbol description for the rule that at symbol should be present in the URL');
-      expect(newRule.active).to.equal(true);
+      expect(rule.name).to.equal('URL’s having at Symbol');
+      expect(rule.code).to.equal('atSymbol');
+      expect(rule.weight).to.equal(0.002);
+      expect(rule.description).to.equal('Symbol description for the rule that at symbol should be present in the URL');
+      expect(rule.active).to.equal(true);
     });
 
   });
